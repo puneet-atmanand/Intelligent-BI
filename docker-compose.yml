@@ -1,0 +1,111 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ayd_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-askyourdata}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-askyourdata}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ayd_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ayd_backend
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+      - duckdbdata:/data
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - METADATA_DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/askyourdata
+      - METADATA_DATABASE_SYNC_URL=postgresql://postgres:postgres@postgres:5432/askyourdata
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - DUCKDB_DATABASE_PATH=/data/askyourdata.duckdb
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production-super-secret-jwt-signing-key-32-chars-min}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-dGhpcy1pcy1hLTMyLWJ5dGUtZmVybmV0LWtleS0xMjM0NTY=}
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173
+      - AI_ENABLED=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ayd_worker
+    restart: unless-stopped
+    command: celery -A app.workers.celery_app worker --loglevel=info
+    volumes:
+      - ./backend:/app
+      - duckdbdata:/data
+    environment:
+      - ENVIRONMENT=development
+      - METADATA_DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/askyourdata
+      - METADATA_DATABASE_SYNC_URL=postgresql://postgres:postgres@postgres:5432/askyourdata
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - DUCKDB_DATABASE_PATH=/data/askyourdata.duckdb
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production-super-secret-jwt-signing-key-32-chars-min}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-dGhpcy1pcy1hLTMyLWJ5dGUtZmVybmV0LWtleS0xMjM0NTY=}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: ayd_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  redisdata:
+  duckdbdata:
+
