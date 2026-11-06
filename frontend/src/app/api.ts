@@ -147,6 +147,49 @@ export interface DashboardItem {
   updated_at?: string;
 }
 
+export interface AIStatus {
+  enabled: boolean;
+  provider: string | null;
+  model: string | null;
+  has_api_key: boolean;
+}
+
+export interface GroundingDetail {
+  is_grounded: boolean;
+  grounding_score: number;
+  matched_figures: Array<{ token: string; parsed_value: number }>;
+  unmatched_figures: Array<{ token: string; parsed_value: number }>;
+  details: string;
+}
+
+export interface AIChatResponse {
+  conversation_id: string;
+  message_id: string;
+  answer: string;
+  sql?: string | null;
+  columns: string[];
+  column_types: string[];
+  rows: any[][];
+  row_count: number;
+  duration_ms: number;
+  grounding: GroundingDetail;
+  recommended_chart: {
+    viz_type?: string;
+    dimensions?: string[];
+    metrics?: string[];
+    time_column?: string;
+    options?: Record<string, any>;
+  };
+  steps: Array<{
+    step: number;
+    tool: string;
+    arguments: any;
+    output?: any;
+    elapsed_ms?: number;
+  }>;
+  latency_ms: number;
+}
+
 export interface SqlQueryResult {
   columns: string[];
   column_types: string[];
@@ -331,4 +374,15 @@ export const api = {
     request<{ message: string }>(`/api/v1/dashboards/${id}`, {
       method: "DELETE",
     }),
+
+  // AI Assistant
+  getAIStatus: () => request<AIStatus>("/api/v1/ai/status"),
+  askAI: (data: { prompt: string; conversation_id?: string; dataset_id?: string; database_id?: string }) =>
+    request<AIChatResponse>("/api/v1/ai/chat", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  getAIConversations: () => request<Array<{ id: string; title: string; created_at: string }>>("/api/v1/ai/conversations"),
+  getAIConversationMessages: (conversationId: string) =>
+    request<any[]>(`/api/v1/ai/conversations/${conversationId}/messages`),
 };
