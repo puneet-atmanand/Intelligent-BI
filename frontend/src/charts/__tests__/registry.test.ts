@@ -33,5 +33,32 @@ describe("Chart Plugin Registry", () => {
     expect(retrieved?.metadata.name).toBe("Mock Bar");
     expect(retrieved?.metadata.tier).toBe(1);
   });
+
+  it("verifies all Tier 1 plugins are automatically registered", () => {
+    const tier1Ids = [
+      "bar",
+      "line",
+      "area",
+      "pie",
+      "table",
+      "big_number",
+      "big_number_trendline",
+      "scatter",
+      "heatmap",
+      "histogram",
+      "pivot_table",
+    ];
+
+    for (const id of tier1Ids) {
+      expect(chartRegistry.has(id)).toBe(true);
+      const plugin = chartRegistry.get(id);
+      expect(plugin).toBeDefined();
+      expect(plugin?.metadata.id).toBe(id);
+      expect(plugin?.controlPanel).toBeDefined();
+      expect(typeof plugin?.buildQuery).toBe("function");
+      expect(typeof plugin?.transformProps).toBe("function");
+      expect(plugin?.Renderer).toBeDefined();
+    }
+  });
 });
 

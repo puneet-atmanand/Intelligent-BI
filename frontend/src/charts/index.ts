@@ -1,4 +1,15 @@
 import { ChartPlugin, ChartMetadata } from "./types";
+import { barChartPlugin } from "./bar";
+import { lineChartPlugin } from "./line";
+import { areaChartPlugin } from "./area";
+import { pieChartPlugin } from "./pie";
+import { tableChartPlugin } from "./table";
+import { bigNumberPlugin } from "./big_number";
+import { bigNumberTrendlinePlugin } from "./big_number_trendline";
+import { scatterChartPlugin } from "./scatter";
+import { heatmapChartPlugin } from "./heatmap";
+import { histogramPlugin } from "./histogram";
+import { pivotTablePlugin } from "./pivot_table";
 
 class ChartRegistry {
   private plugins: Map<string, ChartPlugin> = new Map();
@@ -32,5 +43,18 @@ class ChartRegistry {
 }
 
 export const chartRegistry = new ChartRegistry();
-export * from "./types";
 
+// Register Tier 1 Charts on initialization
+chartRegistry.register(barChartPlugin);
+chartRegistry.register(lineChartPlugin);
+chartRegistry.register(areaChartPlugin);
+chartRegistry.register(pieChartPlugin);
+chartRegistry.register(tableChartPlugin);
+chartRegistry.register(bigNumberPlugin);
+chartRegistry.register(bigNumberTrendlinePlugin);
+chartRegistry.register(scatterChartPlugin);
+chartRegistry.register(heatmapChartPlugin);
+chartRegistry.register(histogramPlugin);
+chartRegistry.register(pivotTablePlugin);
+
+export * from "./types";

@@ -97,6 +97,28 @@ export interface DatasetItem {
   created_at: string;
 }
 
+export interface ChartItem {
+  id: string;
+  title: string;
+  description?: string;
+  dataset_id: string;
+  viz_type: string;
+  params: Record<string, any>;
+  query_context: Record<string, any>;
+  owners: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ChartDataResponse {
+  columns: string[];
+  column_types: string[];
+  rows: any[][];
+  row_count: number;
+  sql: string;
+  duration_ms: number;
+}
+
 export interface SqlQueryResult {
   columns: string[];
   column_types: string[];
@@ -240,4 +262,27 @@ export const api = {
       body: JSON.stringify(data),
     }),
   getQueryHistory: () => request<QueryHistoryItem[]>("/api/v1/sqllab/history"),
+
+  // Charts
+  getCharts: () => request<ChartItem[]>("/api/v1/charts/"),
+  getChart: (id: string) => request<ChartItem>(`/api/v1/charts/${id}`),
+  createChart: (data: any) =>
+    request<ChartItem>("/api/v1/charts/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  updateChart: (id: string, data: any) =>
+    request<ChartItem>(`/api/v1/charts/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  deleteChart: (id: string) =>
+    request<{ message: string }>(`/api/v1/charts/${id}`, {
+      method: "DELETE",
+    }),
+  getChartData: (data: any) =>
+    request<ChartDataResponse>("/api/v1/charts/data", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
