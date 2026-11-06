@@ -11,6 +11,7 @@ from app.api.v1.deps import get_db_session, require_permission
 from app.connectors.factory import get_connector
 from app.core.errors import NotFoundError, AppException
 from app.db.models import Chart, Dataset, DatabaseConnection, User
+from app.query.cache import QueryResultCache, generate_query_cache_key
 from app.query.chart_query_builder import build_chart_sql
 from app.schemas.chart import (
     ChartCreate,
@@ -214,14 +215,22 @@ async def get_chart_data(
         dialect=dialect,
     )
 
+    cache_key = generate_query_cache_key(sql, str(dataset.id))
+    cached = QueryResultCache.get(cache_key)
+    if cached:
+        return ChartDataResponse(**cached)
+
     connector = get_connector(db_conn)
     query_res = connector.execute_query(sql, limit=payload.row_limit)
 
-    return ChartDataResponse(
-        columns=query_res.columns,
-        column_types=query_res.column_types,
-        rows=query_res.rows,
-        row_count=query_res.row_count,
-        sql=sql,
-        duration_ms=query_res.duration_ms,
-    )
+    resp_data = {
+        "columns": query_res.columns,
+        "column_types": query_res.column_types,
+        "rows": query_res.rows,
+        "row_count": query_res.row_count,
+        "sql": sql,
+        "duration_ms": query_res.duration_ms,
+    }
+    QueryResultCache.set(cache_key, resp_data, ttl_seconds=300)
+
+    return ChartDataResponse(**resp_data)
