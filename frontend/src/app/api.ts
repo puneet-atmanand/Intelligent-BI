@@ -119,6 +119,34 @@ export interface ChartDataResponse {
   duration_ms: number;
 }
 
+export interface DashboardPlacement {
+  id: string;
+  chart_id: string;
+  position: { x: number; y: number; w: number; h: number };
+}
+
+export interface DashboardFilterItem {
+  id: string;
+  name: string;
+  filter_type: string;
+  target_charts: string[];
+  default_value: any;
+}
+
+export interface DashboardItem {
+  id: string;
+  title: string;
+  description?: string;
+  slug: string;
+  is_published: boolean;
+  layout: Record<string, any>;
+  owners: string[];
+  charts: DashboardPlacement[];
+  filters: DashboardFilterItem[];
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface SqlQueryResult {
   columns: string[];
   column_types: string[];
@@ -284,5 +312,23 @@ export const api = {
     request<ChartDataResponse>("/api/v1/charts/data", {
       method: "POST",
       body: JSON.stringify(data),
+    }),
+
+  // Dashboards
+  getDashboards: () => request<DashboardItem[]>("/api/v1/dashboards/"),
+  getDashboard: (id: string) => request<DashboardItem>(`/api/v1/dashboards/${id}`),
+  createDashboard: (data: any) =>
+    request<DashboardItem>("/api/v1/dashboards/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  updateDashboard: (id: string, data: any) =>
+    request<DashboardItem>(`/api/v1/dashboards/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  deleteDashboard: (id: string) =>
+    request<{ message: string }>(`/api/v1/dashboards/${id}`, {
+      method: "DELETE",
     }),
 };

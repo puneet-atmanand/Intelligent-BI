@@ -54,6 +54,16 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
     ]
 
+    @field_validator("METADATA_DATABASE_URL", "METADATA_DATABASE_SYNC_URL", mode="after")
+    @classmethod
+    def resolve_sqlite_url(cls, v: str) -> str:
+        if "sqlite" in v and ":///" in v:
+            prefix, path = v.split(":///", 1)
+            if path.startswith("."):
+                resolved = (BACKEND_DIR / path).resolve()
+                return f"{prefix}:///{resolved.as_posix()}"
+        return v
+
     @field_validator("DUCKDB_DATABASE_PATH", mode="after")
     @classmethod
     def resolve_duckdb_path(cls, v: str) -> str:
