@@ -18,3 +18,4 @@ For rapid local exploration and standalone deployment, requiring user authentica
 ## Consequences
 - **Positive**: Zero login friction; immediate access to all BI features, charts, dashboards, datasets, and SQL Lab upon launching `http://localhost:5173`.
 - **Negative**: Unsuitable for multi-tenant production without toggling `AUTH_REQUIRED=true`.
+

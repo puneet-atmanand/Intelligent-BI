@@ -1,15 +1,20 @@
 """Application Configuration Module."""
+import os
 import secrets
+from pathlib import Path
 from typing import List, Union
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+ENV_FILE_PATH = BACKEND_DIR / ".env"
 
 
 class Settings(BaseSettings):
     """Global configuration settings for Ask Your Data backend."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(ENV_FILE_PATH),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -48,6 +53,13 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://127.0.0.1:5173",
     ]
+
+    @field_validator("DUCKDB_DATABASE_PATH", mode="after")
+    @classmethod
+    def resolve_duckdb_path(cls, v: str) -> str:
+        if v.startswith("."):
+            return str((BACKEND_DIR / v).resolve())
+        return v
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
