@@ -1,10 +1,8 @@
-import React from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   BarChart3,
   Database,
-  FileSpreadsheet,
   Terminal,
   Server,
   UploadCloud,

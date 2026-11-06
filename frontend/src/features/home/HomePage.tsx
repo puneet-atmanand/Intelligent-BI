@@ -1,4 +1,3 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Database,
@@ -6,11 +5,8 @@ import {
   BarChart3,
   Terminal,
   ArrowRight,
-  Sparkles,
   Layers,
-  Plus,
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useAuthStore } from "@/features/auth/authStore";
 

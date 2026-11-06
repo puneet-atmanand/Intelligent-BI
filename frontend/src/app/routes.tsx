@@ -1,4 +1,3 @@
-import React from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { ProtectedRoute } from "@/components/ProtectedRoute";

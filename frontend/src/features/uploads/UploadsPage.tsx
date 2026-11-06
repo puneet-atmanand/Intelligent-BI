@@ -1,7 +1,5 @@
-import React from "react";
-import { UploadCloud, FileText, CheckCircle2 } from "lucide-react";
+import { UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
 
 export function UploadsPage() {
   return (

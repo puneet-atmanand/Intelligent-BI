@@ -1,5 +1,4 @@
-import React from "react";
-import { Server, Plus, Database, ShieldCheck } from "lucide-react";
+import { Plus, Database } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 

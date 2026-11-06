@@ -1,4 +1,3 @@
-import React from "react";
 import { Terminal, Play, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 

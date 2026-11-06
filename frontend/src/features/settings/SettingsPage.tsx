@@ -1,5 +1,4 @@
-import React from "react";
-import { Settings as SettingsIcon, Shield, User, Key } from "lucide-react";
+import { User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { useAuthStore } from "@/features/auth/authStore";
 

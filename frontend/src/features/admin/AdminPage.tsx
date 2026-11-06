@@ -1,6 +1,5 @@
-import React from "react";
-import { Shield, Users, Server, FileText, Key, BrainCircuit } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { Users, FileText, BrainCircuit } from "lucide-react";
+import { Card } from "@/components/ui/Card";
 
 export function AdminPage() {
   return (

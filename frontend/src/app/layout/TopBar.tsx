@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Sparkles, Sun, Moon, LogOut, User as UserIcon } from "lucide-react";
+import { useState } from "react";
+import { Sparkles, Sun, Moon, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/features/auth/authStore";
 
