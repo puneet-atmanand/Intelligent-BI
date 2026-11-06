@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.config import settings
 from app.core.errors import AuthenticationError, PermissionDeniedError
 from app.core.security import decode_token
 from app.db.models import Permission, Role, User
@@ -35,6 +36,18 @@ async def get_current_user(
         token = authorization[7:].strip()
 
     if not token:
+        if not settings.AUTH_REQUIRED:
+            # Fallback to default superuser/admin in dev bypass mode
+            admin_stmt = (
+                select(User)
+                .options(selectinload(User.roles).selectinload(Role.permissions))
+                .where(User.deleted_at.is_(None))
+                .order_by(User.is_superuser.desc())
+            )
+            admin_res = await session.execute(admin_stmt)
+            default_user = admin_res.scalars().first()
+            if default_user:
+                return default_user
         raise AuthenticationError("Not authenticated: Missing token")
 
     payload = decode_token(token)

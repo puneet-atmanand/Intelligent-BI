@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, Sun, Moon, LogOut } from "lucide-react";
+import { Sparkles, Sun, Moon, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/features/auth/authStore";
 
@@ -8,7 +8,7 @@ interface TopBarProps {
 }
 
 export function TopBar({ onOpenAIDrawer }: TopBarProps) {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const [isDark, setIsDark] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -86,12 +86,12 @@ export function TopBar({ onOpenAIDrawer }: TopBarProps) {
               <button
                 onClick={() => {
                   setUserMenuOpen(false);
-                  logout();
+                  window.location.reload();
                 }}
-                className="w-full mt-1 flex items-center gap-2 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                className="w-full mt-1 flex items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-accent rounded-md transition-colors"
               >
-                <LogOut className="h-3.5 w-3.5" />
-                Sign Out
+                <RotateCcw className="h-3.5 w-3.5" />
+                Refresh Workspace
               </button>
             </div>
           )}

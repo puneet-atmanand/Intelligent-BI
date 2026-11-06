@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     COOKIE_SECURE: bool = False  # Set to True in production (HTTPS)
     COOKIE_SAMESITE: str = "lax"
+    AUTH_REQUIRED: bool = False  # Set to True to enforce mandatory login gate
 
     # Metadata Database (PostgreSQL)
     METADATA_DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/askyourdata"
