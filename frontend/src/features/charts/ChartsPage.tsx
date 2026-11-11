@@ -53,11 +53,13 @@ export const ChartsPage: React.FC = () => {
   const [chartOptions, setChartOptions] = useState<Record<string, any>>({});
   const [rowLimit, setRowLimit] = useState<number>(100);
 
-  // Filters state
+  // Filters & ad-hoc metrics state
   const [filters, setFilters] = useState<any[]>([]);
   const [newFilterCol, setNewFilterCol] = useState<string>("");
   const [newFilterOp, setNewFilterOp] = useState<string>("==");
   const [newFilterVal, setNewFilterVal] = useState<string>("");
+  const [newMetricAgg, setNewMetricAgg] = useState<string>("SUM");
+  const [newMetricCol, setNewMetricCol] = useState<string>("");
 
   // Query Result & View State
   const [chartData, setChartData] = useState<ChartDataResponse | null>(null);
@@ -71,12 +73,19 @@ export const ChartsPage: React.FC = () => {
     const datasetParam = searchParams.get("dataset");
     if (datasetParam) {
       setSelectedDatasetId(datasetParam);
+      setChartData(null);
+      setSelectedDimension("");
+      setSelectedDimensions([]);
+      setTimeColumn("");
+      setSelectedMetrics([]);
       setMode("explore");
     }
   }, [searchParams]);
 
-  // Handle default dataset and initial selections
-  const currentDataset = datasetList.find((d: DatasetItem) => d.id === selectedDatasetId) || datasetList[0];
+  // Handle default dataset and initial selections (avoid falling back to datasetList[0] while a specific ID is loading)
+  const currentDataset = selectedDatasetId
+    ? datasetList.find((d: DatasetItem) => d.id === selectedDatasetId)
+    : datasetList[0];
   const currentColumns: any[] = currentDataset?.columns || [];
   const currentMetrics: any[] = currentDataset?.metrics || [];
 
@@ -284,6 +293,19 @@ export const ChartsPage: React.FC = () => {
 
   const handleRemoveFilter = (index: number) => {
     setFilters(filters.filter((_, idx) => idx !== index));
+  };
+
+  const handleAddAdhocMetric = () => {
+    if (!newMetricCol) return;
+    const agg = newMetricAgg.toUpperCase();
+    const expression = agg === "COUNT_DISTINCT" ? `COUNT(DISTINCT ${newMetricCol})` : `${agg}(${newMetricCol})`;
+    const metricName = `${agg.toLowerCase()}_${newMetricCol}`;
+    const label = agg === "COUNT_DISTINCT" ? `COUNT(DISTINCT ${newMetricCol})` : `${agg}(${newMetricCol})`;
+
+    if (!selectedMetrics.some((sm) => sm.name === metricName)) {
+      setSelectedMetrics([...selectedMetrics, { name: metricName, label, expression }]);
+    }
+    setNewMetricCol("");
   };
 
   // Render chart using Plugin Registry
@@ -613,7 +635,7 @@ export const ChartsPage: React.FC = () => {
                 <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                   Metrics
                 </label>
-                <div className="space-y-1.5 border border-slate-200 p-2 rounded max-h-36 overflow-y-auto">
+                <div className="space-y-1.5 border border-slate-200 p-2 rounded max-h-40 overflow-y-auto">
                   {/* Default Row Count Metric */}
                   <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
                     <input
@@ -662,6 +684,67 @@ export const ChartsPage: React.FC = () => {
                       </label>
                     );
                   })}
+
+                  {/* Ad-hoc Metrics added in this session */}
+                  {selectedMetrics
+                    .filter(
+                      (sm) =>
+                        sm.name !== "count" &&
+                        sm.expression !== "COUNT(*)" &&
+                        !currentMetrics.some((m) => (m.metric_name || m.name) === sm.name)
+                    )
+                    .map((sm) => (
+                      <div key={sm.name} className="flex items-center justify-between text-xs bg-blue-50 text-blue-900 px-2 py-1 rounded font-mono">
+                        <span className="truncate">{sm.label || sm.expression}</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedMetrics(selectedMetrics.filter((x) => x.name !== sm.name))}
+                          className="text-blue-400 hover:text-red-600 ml-1"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                </div>
+
+                {/* Quick Ad-hoc Aggregation Builder */}
+                <div className="flex gap-1 items-center">
+                  <select
+                    value={newMetricAgg}
+                    onChange={(e) => setNewMetricAgg(e.target.value)}
+                    className="w-20 px-1 py-1 text-[11px] border border-slate-300 rounded bg-white font-mono"
+                  >
+                    <option value="SUM">SUM</option>
+                    <option value="AVG">AVG</option>
+                    <option value="MIN">MIN</option>
+                    <option value="MAX">MAX</option>
+                    <option value="COUNT">COUNT</option>
+                    <option value="COUNT_DISTINCT">DIST</option>
+                  </select>
+                  <select
+                    value={newMetricCol}
+                    onChange={(e) => setNewMetricCol(e.target.value)}
+                    className="flex-1 min-w-0 px-1.5 py-1 text-[11px] border border-slate-300 rounded bg-white"
+                  >
+                    <option value="">+ Add Column Metric...</option>
+                    {currentColumns.map((c) => {
+                      const colName = c.column_name || c.name;
+                      return (
+                        <option key={colName} value={colName}>
+                          {colName}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={handleAddAdhocMetric}
+                    disabled={!newMetricCol}
+                    className="px-2 py-1 text-xs bg-slate-200 hover:bg-slate-300 rounded disabled:opacity-40"
+                    title="Add metric"
+                  >
+                    +
+                  </button>
                 </div>
               </div>
 

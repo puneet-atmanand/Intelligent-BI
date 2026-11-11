@@ -32,39 +32,49 @@ class DuckDBConnector(BaseConnector):
         return duckdb.connect(self.db_path, read_only=True)
 
     def test_connection(self) -> Tuple[bool, str]:
+        conn = None
         try:
             conn = self._get_read_connection()
             res = conn.execute("SELECT 1 AS status").fetchone()
-            conn.close()
             if res and res[0] == 1:
                 return True, "DuckDB engine operational."
             return False, "Unexpected response from DuckDB."
         except Exception as e:
             return False, f"DuckDB connection error: {str(e)}"
+        finally:
+            if conn is not None:
+                conn.close()
 
     def get_schemas(self) -> List[str]:
+        conn = None
         try:
             conn = self._get_read_connection()
             rows = conn.execute("SELECT DISTINCT schema_name FROM information_schema.schemata ORDER BY schema_name").fetchall()
-            conn.close()
             unique_schemas = sorted(list({r[0] for r in rows if r[0] not in ("information_schema", "pg_catalog")}))
             return unique_schemas or ["main"]
         except Exception:
             return ["main"]
+        finally:
+            if conn is not None:
+                conn.close()
 
     def get_tables(self, schema_name: Optional[str] = None) -> List[str]:
         schema = schema_name or "main"
+        conn = None
         try:
             conn = self._get_read_connection()
             query = "SELECT table_name FROM information_schema.tables WHERE table_schema = ? ORDER BY table_name"
             rows = conn.execute(query, [schema]).fetchall()
-            conn.close()
             return [r[0] for r in rows]
         except Exception as e:
             raise AppException(f"Failed to list tables in schema '{schema}': {str(e)}")
+        finally:
+            if conn is not None:
+                conn.close()
 
     def get_columns(self, table_name: str, schema_name: Optional[str] = None) -> List[ColumnMetadata]:
         schema = schema_name or "main"
+        conn = None
         try:
             conn = self._get_read_connection()
             query = """
@@ -74,7 +84,6 @@ class DuckDBConnector(BaseConnector):
                 ORDER BY ordinal_position
             """
             rows = conn.execute(query, [table_name, schema]).fetchall()
-            conn.close()
             return [
                 ColumnMetadata(
                     name=r[0],
@@ -85,6 +94,9 @@ class DuckDBConnector(BaseConnector):
             ]
         except Exception as e:
             raise AppException(f"Failed to inspect columns for table '{table_name}': {str(e)}")
+        finally:
+            if conn is not None:
+                conn.close()
 
     def execute_query(
         self,
@@ -93,6 +105,7 @@ class DuckDBConnector(BaseConnector):
         timeout_seconds: int = 30,
     ) -> QueryResult:
         start_time = time.time()
+        conn = None
         try:
             conn = self._get_read_connection()
             cursor = conn.cursor()
@@ -105,7 +118,6 @@ class DuckDBConnector(BaseConnector):
 
             # Fetch rows up to limit + 1 to detect truncation
             raw_rows = cursor.fetchmany(limit + 1)
-            conn.close()
 
             truncated = len(raw_rows) > limit
             rows = raw_rows[:limit]
@@ -140,4 +152,7 @@ class DuckDBConnector(BaseConnector):
                 code="QUERY_EXECUTION_ERROR",
                 details={"sql": sql, "duration_ms": duration_ms},
             )
+        finally:
+            if conn is not None:
+                conn.close()
 
