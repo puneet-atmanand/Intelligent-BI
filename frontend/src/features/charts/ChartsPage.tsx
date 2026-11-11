@@ -12,7 +12,7 @@ import {
   ChevronLeft,
   Clock,
 } from "lucide-react";
-import { api, ChartItem, ChartDataResponse } from "@/app/api";
+import { api, ChartItem, DatasetItem, ChartDataResponse } from "@/app/api";
 import { chartRegistry, ChartPlugin } from "@/charts";
 
 export const ChartsPage: React.FC = () => {
@@ -34,8 +34,12 @@ export const ChartsPage: React.FC = () => {
     queryFn: api.getDatasets,
   });
 
-  const chartList = Array.isArray(charts) ? charts : (charts as any)?.data || [];
-  const datasetList = Array.isArray(datasets) ? datasets : (datasets as any)?.data || [];
+  const chartList: ChartItem[] = Array.isArray(charts)
+    ? (charts as ChartItem[])
+    : (charts as any)?.data || [];
+  const datasetList: DatasetItem[] = Array.isArray(datasets)
+    ? (datasets as DatasetItem[])
+    : (datasets as any)?.data || [];
 
   // Explore Builder State
   const [selectedDatasetId, setSelectedDatasetId] = useState<string>("");
@@ -71,37 +75,44 @@ export const ChartsPage: React.FC = () => {
   }, [searchParams]);
 
   // Handle default dataset and initial selections
-  const currentDataset = datasets.find((d) => d.id === selectedDatasetId) || datasets[0];
+  const currentDataset = datasetList.find((d: DatasetItem) => d.id === selectedDatasetId) || datasetList[0];
+  const currentColumns: any[] = currentDataset?.columns || [];
+  const currentMetrics: any[] = currentDataset?.metrics || [];
 
   useEffect(() => {
-    if (datasets.length > 0 && !selectedDatasetId) {
-      setSelectedDatasetId(datasets[0].id);
+    if (datasetList.length > 0 && !selectedDatasetId) {
+      setSelectedDatasetId(datasetList[0].id);
     }
-  }, [datasets, selectedDatasetId]);
+  }, [datasetList, selectedDatasetId]);
 
   useEffect(() => {
     if (currentDataset) {
+      const cols: any[] = currentDataset.columns || [];
       // Pick first dimension column
-      const dimCol = currentDataset.columns.find((c) => c.is_dimension && !c.is_datetime);
+      const dimCol = cols.find((c) => c.is_dimension && !c.is_datetime);
       if (dimCol && !selectedDimension) {
-        setSelectedDimension(dimCol.column_name);
-        setSelectedDimensions([dimCol.column_name]);
+        const cName = dimCol.column_name || dimCol.name;
+        setSelectedDimension(cName);
+        setSelectedDimensions([cName]);
       }
 
       // Pick first datetime column
-      const dtCol = currentDataset.columns.find((c) => c.is_datetime);
+      const dtCol = cols.find((c) => c.is_datetime);
       if (dtCol && !timeColumn) {
-        setTimeColumn(dtCol.column_name);
+        const dtName = dtCol.column_name || dtCol.name;
+        setTimeColumn(dtName);
       }
 
       // Pick first metric
       if (selectedMetrics.length === 0) {
-        if (currentDataset.metrics && currentDataset.metrics.length > 0) {
-          const firstM = currentDataset.metrics[0];
+        const metrics: any[] = currentDataset.metrics || [];
+        if (metrics.length > 0) {
+          const firstM = metrics[0];
+          const mName = firstM.metric_name || firstM.name;
           setSelectedMetrics([
             {
-              name: firstM.metric_name,
-              label: firstM.verbose_name || firstM.metric_name,
+              name: mName,
+              label: firstM.verbose_name || mName,
               expression: firstM.sql_expression,
             },
           ]);
@@ -254,8 +265,8 @@ export const ChartsPage: React.FC = () => {
 
           {/* Charts Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {chartList.map((chart) => {
-              const ds = datasetList.find((d) => d.id === chart.dataset_id);
+            {chartList.map((chart: ChartItem) => {
+              const ds = datasetList.find((d: DatasetItem) => d.id === chart.dataset_id);
               return (
                 <div
                   key={chart.id}
@@ -416,7 +427,7 @@ export const ChartsPage: React.FC = () => {
                   }}
                   className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded font-medium focus:ring-1 focus:ring-blue-500 bg-white"
                 >
-                  {datasetList.map((d) => (
+                  {datasetList.map((d: DatasetItem) => (
                     <option key={d.id} value={d.id}>
                       {d.name} ({d.table_name || "Virtual"})
                     </option>
@@ -460,11 +471,14 @@ export const ChartsPage: React.FC = () => {
                     className="w-full px-2.5 py-1 text-xs border border-slate-300 rounded bg-white"
                   >
                     <option value="">None (Categorical)</option>
-                    {currentDataset?.columns.map((c) => (
-                      <option key={c.column_name} value={c.column_name}>
-                        {c.column_name} ({c.data_type})
-                      </option>
-                    ))}
+                    {currentColumns.map((c) => {
+                      const colName = c.column_name || c.name;
+                      return (
+                        <option key={colName} value={colName}>
+                          {colName} ({c.data_type})
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
 
@@ -493,22 +507,25 @@ export const ChartsPage: React.FC = () => {
                 </label>
                 {plugin?.controlPanel.dimensions.multi ? (
                   <div className="space-y-1.5 max-h-36 overflow-y-auto border border-slate-200 p-2 rounded">
-                    {currentDataset?.columns.map((c) => (
-                      <label key={c.column_name} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedDimensions.includes(c.column_name)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedDimensions([...selectedDimensions, c.column_name]);
-                            } else {
-                              setSelectedDimensions(selectedDimensions.filter((dim) => dim !== c.column_name));
-                            }
-                          }}
-                        />
-                        <span className="font-mono text-[11px]">{c.column_name}</span>
-                      </label>
-                    ))}
+                    {currentColumns.map((c) => {
+                      const colName = c.column_name || c.name;
+                      return (
+                        <label key={colName} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedDimensions.includes(colName)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedDimensions([...selectedDimensions, colName]);
+                              } else {
+                                setSelectedDimensions(selectedDimensions.filter((dim) => dim !== colName));
+                              }
+                            }}
+                          />
+                          <span className="font-mono text-[11px]">{colName}</span>
+                        </label>
+                      );
+                    })}
                   </div>
                 ) : (
                   <select
@@ -517,11 +534,14 @@ export const ChartsPage: React.FC = () => {
                     className="w-full px-2.5 py-1 text-xs border border-slate-300 rounded bg-white"
                   >
                     <option value="">None</option>
-                    {currentDataset?.columns.map((c) => (
-                      <option key={c.column_name} value={c.column_name}>
-                        {c.column_name} ({c.data_type})
-                      </option>
-                    ))}
+                    {currentColumns.map((c) => {
+                      const colName = c.column_name || c.name;
+                      return (
+                        <option key={colName} value={colName}>
+                          {colName} ({c.data_type})
+                        </option>
+                      );
+                    })}
                   </select>
                 )}
               </div>
@@ -532,10 +552,11 @@ export const ChartsPage: React.FC = () => {
                   Metrics
                 </label>
                 <div className="space-y-1.5 border border-slate-200 p-2 rounded max-h-36 overflow-y-auto">
-                  {currentDataset?.metrics?.map((m) => {
-                    const isSelected = selectedMetrics.some((sm) => sm.name === m.metric_name);
+                  {currentMetrics.map((m) => {
+                    const mName = m.metric_name || m.name;
+                    const isSelected = selectedMetrics.some((sm) => sm.name === mName);
                     return (
-                      <label key={m.metric_name} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                      <label key={mName} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -544,21 +565,21 @@ export const ChartsPage: React.FC = () => {
                               setSelectedMetrics([
                                 ...selectedMetrics,
                                 {
-                                  name: m.metric_name,
-                                  label: m.verbose_name || m.metric_name,
+                                  name: mName,
+                                  label: m.verbose_name || mName,
                                   expression: m.sql_expression,
                                 },
                               ]);
                             } else {
-                              setSelectedMetrics(selectedMetrics.filter((sm) => sm.name !== m.metric_name));
+                              setSelectedMetrics(selectedMetrics.filter((sm) => sm.name !== mName));
                             }
                           }}
                         />
-                        <span className="font-semibold text-blue-900">{m.verbose_name || m.metric_name}</span>
+                        <span className="font-semibold text-blue-900">{m.verbose_name || mName}</span>
                       </label>
                     );
                   })}
-                  {(!currentDataset?.metrics || currentDataset.metrics.length === 0) && (
+                  {currentMetrics.length === 0 && (
                     <div className="text-[11px] text-slate-400">No saved metrics in dataset.</div>
                   )}
                 </div>
@@ -592,11 +613,14 @@ export const ChartsPage: React.FC = () => {
                     className="w-full px-2 py-1 text-xs border border-slate-300 rounded bg-white"
                   >
                     <option value="">Select column to filter...</option>
-                    {currentDataset?.columns.map((c) => (
-                      <option key={c.column_name} value={c.column_name}>
-                        {c.column_name}
-                      </option>
-                    ))}
+                    {currentColumns.map((c) => {
+                      const colName = c.column_name || c.name;
+                      return (
+                        <option key={colName} value={colName}>
+                          {colName}
+                        </option>
+                      );
+                    })}
                   </select>
                   <div className="flex gap-1">
                     <select

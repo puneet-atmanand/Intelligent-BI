@@ -66,9 +66,38 @@ async def list_datasets(
             "table_name": d.table_name,
             "is_virtual": d.is_virtual,
             "sql_expression": d.sql_expression,
-            "columns_count": len(d.columns),
-            "metrics_count": len(d.metrics),
-            "rls_rules_count": len(d.rls_rules),
+            "columns": [
+                {
+                    "id": str(c.id),
+                    "name": c.name,
+                    "column_name": c.name,
+                    "verbose_name": c.verbose_name or c.name,
+                    "data_type": c.data_type,
+                    "is_datetime": c.is_datetime,
+                    "is_dimension": c.is_dimension,
+                    "is_filterable": c.is_filterable,
+                    "is_groupable": c.is_groupable,
+                    "is_hidden_from_ai": c.is_hidden_from_ai,
+                    "description": c.description,
+                }
+                for c in (d.columns or [])
+            ],
+            "metrics": [
+                {
+                    "id": str(m.id),
+                    "name": m.name,
+                    "metric_name": m.name,
+                    "verbose_name": m.verbose_name or m.name,
+                    "sql_expression": m.sql_expression,
+                    "metric_type": m.metric_type,
+                    "number_format": m.number_format,
+                    "description": m.description,
+                }
+                for m in (d.metrics or [])
+            ],
+            "columns_count": len(d.columns or []),
+            "metrics_count": len(d.metrics or []),
+            "rls_rules_count": len(d.rls_rules or []),
             "created_at": d.created_at.isoformat() if d.created_at else None,
         }
         output.append(d_dict)
