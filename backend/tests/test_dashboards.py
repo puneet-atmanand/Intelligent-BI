@@ -45,3 +45,4 @@ def test_dashboard_update_and_filter_schema():
     assert update_payload.title == "Updated Dashboard Title"
     assert update_payload.is_published is True
     assert len(update_payload.filters) == 1
+

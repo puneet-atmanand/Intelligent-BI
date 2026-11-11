@@ -88,6 +88,16 @@ export const DatabasesPage: React.FC = () => {
     enabled: Boolean(browserDb && selectedTable),
   });
 
+  const schemaList: string[] = Array.isArray(schemas)
+    ? schemas
+    : (schemas as any)?.data || [];
+  const tableList: string[] = Array.isArray(tables)
+    ? tables
+    : (tables as any)?.data || [];
+  const columnList: any[] = Array.isArray(columns)
+    ? columns
+    : (columns as any)?.data || [];
+
   // Create mutation
   const createMutation = useMutation({
     mutationFn: (data: any) => api.createDatabase(data),
@@ -417,7 +427,7 @@ export const DatabasesPage: React.FC = () => {
                     }}
                     className="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500"
                   >
-                    {schemas.map((s) => (
+                    {schemaList.map((s) => (
                       <option key={s} value={s}>
                         {s}
                       </option>
@@ -427,10 +437,10 @@ export const DatabasesPage: React.FC = () => {
 
                 <div>
                   <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1.5">
-                    Tables ({tables.length})
+                    Tables ({tableList.length})
                   </label>
                   <div className="space-y-1">
-                    {tables.map((t) => (
+                    {tableList.map((t) => (
                       <button
                         key={t}
                         onClick={() => setSelectedTable(t)}
@@ -444,7 +454,7 @@ export const DatabasesPage: React.FC = () => {
                         <span className="truncate">{t}</span>
                       </button>
                     ))}
-                    {tables.length === 0 && (
+                    {tableList.length === 0 && (
                       <div className="text-xs text-slate-400 py-3 text-center">
                         No tables found in this schema.
                       </div>
@@ -472,7 +482,7 @@ export const DatabasesPage: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                          {columns.map((col: any) => (
+                          {columnList.map((col: any) => (
                             <tr key={col.name} className="hover:bg-slate-50">
                               <td className="px-3 py-2 font-mono font-medium text-slate-800">
                                 {col.name}

@@ -89,3 +89,4 @@ export const barChartPlugin: ChartPlugin<BarChartProps> = {
   Renderer,
 };
 export default barChartPlugin;
+

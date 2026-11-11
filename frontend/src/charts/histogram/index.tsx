@@ -104,3 +104,4 @@ export const histogramPlugin: ChartPlugin<HistogramProps> = {
   Renderer,
 };
 export default histogramPlugin;
+

@@ -82,3 +82,4 @@ export const scatterChartPlugin: ChartPlugin<ScatterChartProps> = {
   Renderer,
 };
 export default scatterChartPlugin;
+

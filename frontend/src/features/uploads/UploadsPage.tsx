@@ -111,7 +111,9 @@ export const UploadsPage: React.FC = () => {
     e.preventDefault();
   };
 
-  const uploads = uploadsData?.data || [];
+  const uploads: any[] = Array.isArray(uploadsData)
+    ? uploadsData
+    : (uploadsData as any)?.data || [];
 
   return (
     <div className="space-y-6">

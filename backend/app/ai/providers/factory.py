@@ -37,3 +37,4 @@ def get_llm_provider(
         return MockProvider(model="mock-analyst")
 
     return MockProvider(model="mock-analyst")
+

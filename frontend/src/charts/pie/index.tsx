@@ -90,3 +90,4 @@ export const pieChartPlugin: ChartPlugin<PieChartProps> = {
   Renderer,
 };
 export default pieChartPlugin;
+

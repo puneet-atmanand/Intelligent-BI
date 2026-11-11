@@ -79,7 +79,11 @@ export const DatasetsPage: React.FC = () => {
     addMetricMutation.mutate(metricForm);
   };
 
-  const filteredDatasets = datasets.filter(
+  const datasetList: DatasetItem[] = Array.isArray(datasets)
+    ? datasets
+    : (datasets as any)?.data || [];
+
+  const filteredDatasets = datasetList.filter(
     (d) =>
       d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (d.table_name && d.table_name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -126,7 +130,7 @@ export const DatasetsPage: React.FC = () => {
           />
         </div>
         <div className="text-xs text-slate-500">
-          Showing {filteredDatasets.length} of {datasets.length} datasets
+          Showing {filteredDatasets.length} of {datasetList.length} datasets
         </div>
       </div>
 

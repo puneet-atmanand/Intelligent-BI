@@ -73,7 +73,7 @@ async def list_datasets(
         }
         output.append(d_dict)
 
-    return {"data": output}
+    return output
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)

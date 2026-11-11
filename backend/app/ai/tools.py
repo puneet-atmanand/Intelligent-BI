@@ -254,3 +254,4 @@ async def tool_execute_sql_query(
             "sql": validated_sql,
             "error": f"Execution Error: {str(e)}",
         }
+

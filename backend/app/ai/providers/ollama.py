@@ -69,3 +69,4 @@ class OllamaProvider(BaseLLMProvider):
             provider="ollama",
             model=self.model,
         )
+

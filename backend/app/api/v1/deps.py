@@ -1,4 +1,5 @@
 """FastAPI Dependency Injection Providers."""
+import uuid
 from typing import AsyncGenerator, Callable, List
 from fastapi import Cookie, Depends, Header, Request
 from sqlalchemy import select
@@ -51,9 +52,14 @@ async def get_current_user(
         raise AuthenticationError("Not authenticated: Missing token")
 
     payload = decode_token(token)
-    user_id = payload.get("sub")
-    if not user_id:
+    user_id_raw = payload.get("sub")
+    if not user_id_raw:
         raise AuthenticationError("Invalid token: Missing subject")
+
+    try:
+        user_uuid = uuid.UUID(str(user_id_raw))
+    except (ValueError, TypeError):
+        raise AuthenticationError("Invalid token: Malformed subject UUID")
 
     # Fetch user with eager loaded roles and their permissions
     stmt = (
@@ -61,7 +67,7 @@ async def get_current_user(
         .options(
             selectinload(User.roles).selectinload(Role.permissions),
         )
-        .where(User.id == user_id, User.deleted_at.is_(None))
+        .where(User.id == user_uuid, User.deleted_at.is_(None))
     )
     result = await session.execute(stmt)
     user = result.scalar_one_or_none()

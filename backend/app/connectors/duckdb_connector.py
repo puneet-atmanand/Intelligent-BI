@@ -45,9 +45,10 @@ class DuckDBConnector(BaseConnector):
     def get_schemas(self) -> List[str]:
         try:
             conn = self._get_read_connection()
-            rows = conn.execute("SELECT schema_name FROM information_schema.schemata ORDER BY schema_name").fetchall()
+            rows = conn.execute("SELECT DISTINCT schema_name FROM information_schema.schemata ORDER BY schema_name").fetchall()
             conn.close()
-            return [r[0] for r in rows if r[0] not in ("information_schema", "pg_catalog")]
+            unique_schemas = sorted(list({r[0] for r in rows if r[0] not in ("information_schema", "pg_catalog")}))
+            return unique_schemas or ["main"]
         except Exception:
             return ["main"]
 
@@ -139,3 +140,4 @@ class DuckDBConnector(BaseConnector):
                 code="QUERY_EXECUTION_ERROR",
                 details={"sql": sql, "duration_ms": duration_ms},
             )
+

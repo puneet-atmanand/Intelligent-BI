@@ -1,6 +1,6 @@
 """Database Connections API Endpoints."""
 import uuid
-from typing import Any, List
+from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -202,7 +202,7 @@ async def get_database_schemas(
     id: uuid.UUID,
     session: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(require_permission("databases:read")),
-) -> dict:
+) -> List[str]:
     """List schemas in the database."""
     stmt = select(DatabaseConnection).where(
         DatabaseConnection.id == id,
@@ -214,17 +214,17 @@ async def get_database_schemas(
         raise NotFoundError("Database connection not found.")
 
     connector = get_connector(conn)
-    schemas = connector.get_schemas()
-    return {"data": schemas}
+    return connector.get_schemas()
 
 
+@router.get("/{id}/tables")
 @router.get("/{id}/schemas/{schema}/tables")
 async def get_database_tables(
     id: uuid.UUID,
-    schema: str,
+    schema: Optional[str] = None,
     session: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(require_permission("databases:read")),
-) -> dict:
+) -> List[str]:
     """List tables and views in a schema."""
     stmt = select(DatabaseConnection).where(
         DatabaseConnection.id == id,
@@ -236,18 +236,18 @@ async def get_database_tables(
         raise NotFoundError("Database connection not found.")
 
     connector = get_connector(conn)
-    tables = connector.get_tables(schema_name=schema)
-    return {"data": tables}
+    return connector.get_tables(schema_name=schema)
 
 
+@router.get("/{id}/tables/{table}/columns")
 @router.get("/{id}/schemas/{schema}/tables/{table}/columns")
 async def get_database_columns(
     id: uuid.UUID,
-    schema: str,
     table: str,
+    schema: Optional[str] = None,
     session: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(require_permission("databases:read")),
-) -> dict:
+) -> List[dict]:
     """Inspect columns and data types for a table."""
     stmt = select(DatabaseConnection).where(
         DatabaseConnection.id == id,
@@ -260,4 +260,4 @@ async def get_database_columns(
 
     connector = get_connector(conn)
     columns = connector.get_columns(table_name=table, schema_name=schema)
-    return {"data": [c.to_dict() for c in columns]}
+    return [c.to_dict() for c in columns]

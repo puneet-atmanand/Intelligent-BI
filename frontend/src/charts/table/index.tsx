@@ -146,3 +146,4 @@ export const tableChartPlugin: ChartPlugin<TableChartProps> = {
   Renderer,
 };
 export default tableChartPlugin;
+

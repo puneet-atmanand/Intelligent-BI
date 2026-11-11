@@ -100,3 +100,4 @@ export const heatmapChartPlugin: ChartPlugin<HeatmapChartProps> = {
   Renderer,
 };
 export default heatmapChartPlugin;
+

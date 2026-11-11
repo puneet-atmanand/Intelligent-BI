@@ -59,3 +59,4 @@ class QueryResultCache:
     def clear(cls) -> None:
         """Purge all entries from the cache."""
         _MEMORY_CACHE.clear()
+

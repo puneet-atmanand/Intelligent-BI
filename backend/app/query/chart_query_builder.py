@@ -154,3 +154,4 @@ def build_chart_sql(
         row_limit=row_limit,
     )
     return safe_sql
+

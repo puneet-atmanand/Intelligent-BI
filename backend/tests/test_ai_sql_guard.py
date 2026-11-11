@@ -48,3 +48,4 @@ def test_ai_sql_guard_allowed_tables():
             sql,
             allowed_tables={"global_sales", "customers"},
         )
+

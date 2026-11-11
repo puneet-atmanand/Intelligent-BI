@@ -156,7 +156,14 @@ export const DashboardsPage: React.FC = () => {
     queryFn: api.getCharts,
   });
 
-  const activeDashboard = dashboards.find((d) => d.id === activeDashboardId);
+  const dashboardList: DashboardItem[] = Array.isArray(dashboards)
+    ? dashboards
+    : (dashboards as any)?.data || [];
+  const allChartsList: ChartItem[] = Array.isArray(allCharts)
+    ? allCharts
+    : (allCharts as any)?.data || [];
+
+  const activeDashboard = dashboardList.find((d) => d.id === activeDashboardId);
 
   // Auto refresh timer
   useEffect(() => {
@@ -271,7 +278,7 @@ export const DashboardsPage: React.FC = () => {
 
           {/* Dashboards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {dashboards.map((dash) => (
+            {dashboardList.map((dash) => (
               <div
                 key={dash.id}
                 className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between"
@@ -332,7 +339,7 @@ export const DashboardsPage: React.FC = () => {
             ))}
           </div>
 
-          {dashboards.length === 0 && (
+          {dashboardList.length === 0 && (
             <div className="rounded-xl border border-slate-200 bg-white p-12 text-center space-y-3">
               <div className="inline-flex p-3 rounded-full bg-blue-50 text-blue-600">
                 <Layers className="w-6 h-6" />
@@ -589,7 +596,7 @@ export const DashboardsPage: React.FC = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {allCharts.map((c) => (
+              {allChartsList.map((c) => (
                 <div
                   key={c.id}
                   onClick={() => handleAddChartToDashboard(c.id)}

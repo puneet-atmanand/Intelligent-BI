@@ -91,3 +91,4 @@ export const bigNumberPlugin: ChartPlugin<BigNumberProps> = {
   Renderer,
 };
 export default bigNumberPlugin;
+

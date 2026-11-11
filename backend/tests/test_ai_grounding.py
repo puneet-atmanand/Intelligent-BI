@@ -74,3 +74,4 @@ def test_grounding_percentage_and_count_matches():
 
     assert result.is_grounded is True
     assert len(result.unmatched_figures) == 0
+

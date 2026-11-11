@@ -52,6 +52,9 @@ export const SqlLabPage: React.FC = () => {
     queryFn: api.getSavedQueries,
   });
 
+  const historyList: any[] = Array.isArray(history) ? history : (history as any)?.data || [];
+  const savedQueriesList: any[] = Array.isArray(savedQueries) ? savedQueries : (savedQueries as any)?.data || [];
+
   // Active database for left browser
   const [selectedDbId, setSelectedDbId] = useState<string>("");
   const [selectedSchema, setSelectedSchema] = useState<string>("main");
@@ -628,7 +631,7 @@ export const SqlLabPage: React.FC = () => {
 
           <div className="flex-1 overflow-y-auto p-3 space-y-2">
             {sideDrawer === "history" &&
-              history.map((h) => (
+              historyList.map((h) => (
                 <div
                   key={h.id}
                   onClick={() => {
@@ -659,7 +662,7 @@ export const SqlLabPage: React.FC = () => {
               ))}
 
             {sideDrawer === "saved" &&
-              savedQueries.map((s) => (
+              savedQueriesList.map((s) => (
                 <div
                   key={s.id}
                   onClick={() => {

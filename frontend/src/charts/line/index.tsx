@@ -88,3 +88,4 @@ export const lineChartPlugin: ChartPlugin<LineChartProps> = {
   Renderer,
 };
 export default lineChartPlugin;
+

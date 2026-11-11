@@ -88,3 +88,4 @@ export const areaChartPlugin: ChartPlugin<AreaChartProps> = {
   Renderer,
 };
 export default areaChartPlugin;
+

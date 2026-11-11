@@ -48,3 +48,4 @@ class DashboardOut(DashboardBase):
     filters: List[Dict[str, Any]] = Field(default_factory=list)
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+

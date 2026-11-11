@@ -37,3 +37,4 @@ class AIStatusResponse(BaseModel):
     provider: Optional[str] = None
     model: Optional[str] = None
     has_api_key: bool = False
+

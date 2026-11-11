@@ -61,3 +61,4 @@ def test_clamp_limit():
     sql = "SELECT id FROM large_table LIMIT 50000"
     formatted = validate_and_format_sql(sql, dialect="postgres", row_limit=5000)
     assert "LIMIT 5000" in formatted
+

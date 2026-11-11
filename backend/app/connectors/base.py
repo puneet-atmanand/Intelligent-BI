@@ -91,3 +91,4 @@ class BaseConnector(ABC):
     ) -> QueryResult:
         """Execute a read query and return standardized QueryResult."""
         pass
+

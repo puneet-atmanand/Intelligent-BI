@@ -123,3 +123,4 @@ export const bigNumberTrendlinePlugin: ChartPlugin<BigNumberTrendlineProps> = {
   Renderer,
 };
 export default bigNumberTrendlinePlugin;
+

@@ -38,3 +38,4 @@ def test_query_cache_expiry():
     # Set 0s TTL (already expired)
     QueryResultCache.set(key, data, ttl_seconds=-1)
     assert QueryResultCache.get(key) is None
+

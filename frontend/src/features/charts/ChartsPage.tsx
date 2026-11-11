@@ -12,7 +12,7 @@ import {
   ChevronLeft,
   Clock,
 } from "lucide-react";
-import { api, ChartItem, ChartDataResponse } from "@/app/api";
+import { api, ChartItem, DatasetItem, ChartDataResponse } from "@/app/api";
 import { chartRegistry, ChartPlugin } from "@/charts";
 
 export const ChartsPage: React.FC = () => {
@@ -33,6 +33,9 @@ export const ChartsPage: React.FC = () => {
     queryKey: ["datasets"],
     queryFn: api.getDatasets,
   });
+
+  const chartList: ChartItem[] = Array.isArray(charts) ? charts : (charts as any)?.data || [];
+  const datasetList: DatasetItem[] = Array.isArray(datasets) ? datasets : (datasets as any)?.data || [];
 
   // Explore Builder State
   const [selectedDatasetId, setSelectedDatasetId] = useState<string>("");
@@ -244,22 +247,8 @@ export const ChartsPage: React.FC = () => {
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 shadow-sm transition"
               >
                 <Plus className="w-4 h-4" />
-                Create Chart
-              </button>
-            </div>
-          </div>
 
-          {/* Charts Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {charts.map((chart) => {
-              const ds = datasets.find((d) => d.id === chart.dataset_id);
-              return (
-                <div
-                  key={chart.id}
-                  className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-start justify-between">
+
                       <div className="flex items-center gap-3">
                         <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
                           <BarChart3 className="w-5 h-5" />
@@ -413,7 +402,7 @@ export const ChartsPage: React.FC = () => {
                   }}
                   className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded font-medium focus:ring-1 focus:ring-blue-500 bg-white"
                 >
-                  {datasets.map((d) => (
+                  {datasetList.map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.name} ({d.table_name || "Virtual"})
                     </option>

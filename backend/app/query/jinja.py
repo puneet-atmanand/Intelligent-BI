@@ -11,3 +11,4 @@ def render_template_sql(raw_sql: str, parameters: Dict[str, Any]) -> str:
     env = SandboxedEnvironment(autoescape=False)
     template = env.from_string(raw_sql)
     return template.render(**parameters)
+

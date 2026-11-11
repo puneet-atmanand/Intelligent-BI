@@ -75,3 +75,4 @@ class ConnectionTestRequest(BaseModel):
 class ConnectionTestResponse(BaseModel):
     success: bool
     message: str
+
