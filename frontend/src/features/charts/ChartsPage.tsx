@@ -11,6 +11,7 @@ import {
   RefreshCw,
   ChevronLeft,
   Clock,
+  AlertCircle,
 } from "lucide-react";
 import { api, ChartItem, DatasetItem, ChartDataResponse } from "@/app/api";
 import { chartRegistry, ChartPlugin } from "@/charts";
@@ -88,8 +89,8 @@ export const ChartsPage: React.FC = () => {
   useEffect(() => {
     if (currentDataset) {
       const cols: any[] = currentDataset.columns || [];
-      // Pick first dimension column
-      const dimCol = cols.find((c) => c.is_dimension && !c.is_datetime);
+      // Pick first dimension column or fallback to first column
+      const dimCol = cols.find((c) => c.is_dimension && !c.is_datetime) || cols[0];
       if (dimCol && !selectedDimension) {
         const cName = dimCol.column_name || dimCol.name;
         setSelectedDimension(cName);
@@ -118,7 +119,7 @@ export const ChartsPage: React.FC = () => {
           ]);
         } else {
           // Default COUNT(*)
-          setSelectedMetrics([{ name: "count", label: "Count of Rows", expression: "COUNT(*)" }]);
+          setSelectedMetrics([{ name: "count", label: "Count", expression: "COUNT(*)" }]);
         }
       }
     }
@@ -424,6 +425,10 @@ export const ChartsPage: React.FC = () => {
                   onChange={(e) => {
                     setSelectedDatasetId(e.target.value);
                     setChartData(null);
+                    setSelectedDimension("");
+                    setSelectedDimensions([]);
+                    setTimeColumn("");
+                    setSelectedMetrics([]);
                   }}
                   className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded font-medium focus:ring-1 focus:ring-blue-500 bg-white"
                 >
@@ -750,6 +755,15 @@ export const ChartsPage: React.FC = () => {
               <div className="flex-1 overflow-auto p-4 flex flex-col justify-center">
                 {activeViewTab === "chart" && (
                   <div className="h-full w-full flex flex-col justify-center">
+                    {runQueryMutation.isError && (
+                      <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-semibold">Query Execution Failed: </span>
+                          {(runQueryMutation.error as any)?.message || String(runQueryMutation.error)}
+                        </div>
+                      </div>
+                    )}
                     {plugin && chartProps ? (
                       <plugin.Renderer {...chartProps} />
                     ) : (

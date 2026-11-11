@@ -3,6 +3,7 @@
 Constructs safe SQL queries for charts from semantic datasets, dimensions,
 metrics, time grains, ad-hoc filters, and limits without raw string concatenation.
 """
+import re
 from typing import Any, Dict, List, Optional
 import sqlglot
 from sqlglot import exp
@@ -65,9 +66,10 @@ def build_chart_sql(
     # 3. Add metrics (aggregations)
     for m in metrics:
         expr = m.get("expression") or m.get("sql_expression")
-        label = m.get("label") or m.get("name") or "metric"
+        raw_label = m.get("name") or m.get("label") or "metric"
+        clean_alias = re.sub(r"[^a-zA-Z0-9_]+", "_", str(raw_label)).strip("_").lower() or "metric"
         if expr:
-            select_items.append(f"{expr} AS {label}")
+            select_items.append(f"{expr} AS {clean_alias}")
 
     # Fallback if no select items
     if not select_items:
@@ -140,9 +142,10 @@ def build_chart_sql(
             query_parts.append(f"ORDER BY {', '.join(order_clauses)}")
     elif metrics:
         # Default order by first metric descending
-        first_metric_label = metrics[0].get("label") or metrics[0].get("name")
-        if first_metric_label:
-            query_parts.append(f"ORDER BY {first_metric_label} DESC")
+        first_metric = metrics[0]
+        raw_label = first_metric.get("name") or first_metric.get("label") or "metric"
+        clean_alias = re.sub(r"[^a-zA-Z0-9_]+", "_", str(raw_label)).strip("_").lower() or "metric"
+        query_parts.append(f"ORDER BY {clean_alias} DESC")
 
     raw_sql = " ".join(query_parts)
 
