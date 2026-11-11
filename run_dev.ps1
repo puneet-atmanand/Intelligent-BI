@@ -1,4 +1,4 @@
-﻿# Ask Your Data — Unified Development Runner
+# Ask Your Data — Unified Development Runner
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "         Starting Ask Your Data (Local Dev Mode)          " -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan

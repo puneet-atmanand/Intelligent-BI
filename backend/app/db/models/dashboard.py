@@ -30,11 +30,13 @@ class Dashboard(BaseModel):
         "DashboardChart",
         back_populates="dashboard",
         cascade="all, delete-orphan",
+        lazy="selectin",
     )
     filters: Mapped[List["DashboardFilter"]] = relationship(
         "DashboardFilter",
         back_populates="dashboard",
         cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
 

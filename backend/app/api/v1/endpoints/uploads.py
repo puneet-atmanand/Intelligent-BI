@@ -81,7 +81,7 @@ async def import_upload_file(
         "dataset_id": str(dataset.id),
         "dataset_name": dataset.name,
         "table_name": dataset.table_name,
-        "columns_count": len(dataset.columns),
+        "columns_count": len(dataset.columns) if hasattr(dataset, "columns") and dataset.columns else 0,
     }
 
 

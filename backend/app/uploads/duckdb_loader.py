@@ -5,6 +5,7 @@ from typing import Dict, List, Optional
 import duckdb
 import pandas as pd
 from sqlalchemy import delete, select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.connectors.duckdb_connector import duckdb_write_lock
@@ -179,5 +180,10 @@ async def load_file_into_duckdb_and_register_dataset(
         session.add(dataset_col)
 
     await session.commit()
-    await session.refresh(dataset)
-    return dataset
+    refreshed_stmt = (
+        select(Dataset)
+        .options(selectinload(Dataset.columns), selectinload(Dataset.metrics))
+        .where(Dataset.id == dataset.id)
+    )
+    refreshed_res = await session.execute(refreshed_stmt)
+    return refreshed_res.scalar_one()

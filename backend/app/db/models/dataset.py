@@ -37,16 +37,19 @@ class Dataset(BaseModel):
         "DatasetColumn",
         back_populates="dataset",
         cascade="all, delete-orphan",
+        lazy="selectin",
     )
     metrics: Mapped[List["DatasetMetric"]] = relationship(
         "DatasetMetric",
         back_populates="dataset",
         cascade="all, delete-orphan",
+        lazy="selectin",
     )
     rls_rules: Mapped[List["RLSRule"]] = relationship(
         "RLSRule",
         back_populates="dataset",
         cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
 

@@ -72,6 +72,7 @@ class Role(BaseModel):
         "Permission",
         secondary="role_permissions",
         back_populates="roles",
+        lazy="selectin",
     )
 
 
