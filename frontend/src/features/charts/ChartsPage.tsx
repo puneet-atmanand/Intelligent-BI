@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -89,8 +89,35 @@ export const ChartsPage: React.FC = () => {
   useEffect(() => {
     if (currentDataset) {
       const cols: any[] = currentDataset.columns || [];
-      // Pick first dimension column or fallback to first column
-      const dimCol = cols.find((c) => c.is_dimension && !c.is_datetime) || cols[0];
+      // Pick best dimension column: prefer categorical columns like college_name, branch, status
+      const dimCol =
+        cols.find((c) => {
+          const n = (c.column_name || c.name || "").toLowerCase();
+          return (
+            c.is_dimension &&
+            !c.is_datetime &&
+            (n.includes("college") ||
+              n.includes("dept") ||
+              n.includes("status") ||
+              n.includes("category") ||
+              n.includes("group") ||
+              n.includes("branch"))
+          );
+        }) ||
+        cols.find((c) => {
+          const n = (c.column_name || c.name || "").toLowerCase();
+          return (
+            c.is_dimension &&
+            !c.is_datetime &&
+            !n.includes("email") &&
+            !n.includes("mobile") &&
+            !n.includes("phone") &&
+            !n.includes("id")
+          );
+        }) ||
+        cols.find((c) => c.is_dimension && !c.is_datetime) ||
+        cols[0];
+
       if (dimCol && !selectedDimension) {
         const cName = dimCol.column_name || dimCol.name;
         setSelectedDimension(cName);
@@ -119,11 +146,26 @@ export const ChartsPage: React.FC = () => {
           ]);
         } else {
           // Default COUNT(*)
-          setSelectedMetrics([{ name: "count", label: "Count", expression: "COUNT(*)" }]);
+          setSelectedMetrics([{ name: "count", label: "Count of Rows", expression: "COUNT(*)" }]);
         }
       }
     }
   }, [currentDataset]);
+
+  // Auto-run query when explore mode loads with a dataset and initial dimension
+  const hasAutoRunRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      mode === "explore" &&
+      selectedDatasetId &&
+      currentDataset &&
+      selectedDimension &&
+      hasAutoRunRef.current !== `${selectedDatasetId}_${selectedDimension}`
+    ) {
+      hasAutoRunRef.current = `${selectedDatasetId}_${selectedDimension}`;
+      runQueryMutation.mutate();
+    }
+  }, [mode, selectedDatasetId, currentDataset, selectedDimension]);
 
   // Execute chart query mutation
   const runQueryMutation = useMutation({
@@ -132,11 +174,26 @@ export const ChartsPage: React.FC = () => {
       const plugin = chartRegistry.get(selectedVizType);
       const isMultiDim = plugin?.controlPanel.dimensions.multi;
 
+      let dims: string[] = isMultiDim ? selectedDimensions : selectedDimension ? [selectedDimension] : [];
+      // Safety fallback: if chart requires a dimension and dims is empty, pick first dimension column
+      if (dims.length === 0 && selectedVizType !== "big_number") {
+        const fallbackCol = currentColumns.find((c) => c.is_dimension && !c.is_datetime) || currentColumns[0];
+        if (fallbackCol) {
+          const fbName = fallbackCol.column_name || fallbackCol.name;
+          dims = [fbName];
+        }
+      }
+
+      const activeMetrics =
+        selectedMetrics.length > 0
+          ? selectedMetrics
+          : [{ name: "count", label: "Count of Rows", expression: "COUNT(*)" }];
+
       const payload = {
         dataset_id: selectedDatasetId,
         viz_type: selectedVizType,
-        dimensions: isMultiDim ? selectedDimensions : selectedDimension ? [selectedDimension] : [],
-        metrics: selectedMetrics,
+        dimensions: dims,
+        metrics: activeMetrics,
         filters,
         time_column: timeColumn || undefined,
         time_grain: timeGrain || undefined,
@@ -450,14 +507,14 @@ export const ChartsPage: React.FC = () => {
                     <button
                       key={meta.id}
                       onClick={() => setSelectedVizType(meta.id)}
-                      className={`px-2.5 py-2 text-left text-xs rounded border transition flex flex-col justify-between ${
+                      className={`px-2 py-1.5 text-left text-xs rounded border transition flex items-center justify-between ${
                         selectedVizType === meta.id
-                          ? "border-blue-600 bg-blue-50/70 text-blue-900 font-medium ring-1 ring-blue-500"
+                          ? "border-blue-600 bg-blue-50/80 text-blue-900 font-semibold ring-1 ring-blue-500"
                           : "border-slate-200 text-slate-700 hover:bg-slate-50"
                       }`}
                     >
-                      <span className="font-semibold">{meta.name}</span>
-                      <span className="text-[10px] text-slate-400 capitalize">{meta.category}</span>
+                      <span className="truncate">{meta.name}</span>
+                      <span className="text-[9px] text-slate-400 capitalize shrink-0 ml-1">{meta.category}</span>
                     </button>
                   ))}
                 </div>
@@ -557,6 +614,27 @@ export const ChartsPage: React.FC = () => {
                   Metrics
                 </label>
                 <div className="space-y-1.5 border border-slate-200 p-2 rounded max-h-36 overflow-y-auto">
+                  {/* Default Row Count Metric */}
+                  <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedMetrics.some((sm) => sm.name === "count" || sm.expression === "COUNT(*)")}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedMetrics([
+                            ...selectedMetrics,
+                            { name: "count", label: "Count of Rows", expression: "COUNT(*)" },
+                          ]);
+                        } else {
+                          setSelectedMetrics(
+                            selectedMetrics.filter((sm) => sm.name !== "count" && sm.expression !== "COUNT(*)")
+                          );
+                        }
+                      }}
+                    />
+                    <span className="font-semibold text-blue-900">Row Count (COUNT(*))</span>
+                  </label>
+
                   {currentMetrics.map((m) => {
                     const mName = m.metric_name || m.name;
                     const isSelected = selectedMetrics.some((sm) => sm.name === mName);
@@ -584,9 +662,6 @@ export const ChartsPage: React.FC = () => {
                       </label>
                     );
                   })}
-                  {currentMetrics.length === 0 && (
-                    <div className="text-[11px] text-slate-400">No saved metrics in dataset.</div>
-                  )}
                 </div>
               </div>
 
@@ -767,9 +842,38 @@ export const ChartsPage: React.FC = () => {
                     {plugin && chartProps ? (
                       <plugin.Renderer {...chartProps} />
                     ) : (
-                      <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs py-16">
-                        <BarChart3 className="w-10 h-10 mb-2 opacity-30" />
-                        Configure your dimensions & metrics on the left, then click "Run Query" to render.
+                      <div className="h-full flex flex-col items-center justify-center text-slate-500 text-xs py-16 px-4">
+                        <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 mb-4 border border-blue-100 shadow-sm">
+                          <BarChart3 className="w-7 h-7" />
+                        </div>
+                        <h3 className="text-base font-semibold text-slate-800 mb-1">
+                          Ready to Explore {currentDataset?.name || "Dataset"}
+                        </h3>
+                        <p className="text-slate-500 max-w-md text-center mb-6 leading-relaxed">
+                          Selected chart: <span className="font-semibold text-slate-700">{plugin?.metadata.name || selectedVizType}</span>.
+                          {selectedDimension ? (
+                            <> Grouping by <span className="font-semibold text-blue-700 font-mono bg-blue-50 px-1.5 py-0.5 rounded">{selectedDimension}</span>.</>
+                          ) : (
+                            <> Please choose a Dimension (Group By) on the left sidebar.</>
+                          )}
+                        </p>
+                        <button
+                          onClick={() => runQueryMutation.mutate()}
+                          disabled={runQueryMutation.isPending}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg shadow transition hover:shadow-md disabled:opacity-50"
+                        >
+                          {runQueryMutation.isPending ? (
+                            <>
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                              Running Query...
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-4 h-4 fill-current" />
+                              Run Query & Generate Chart
+                            </>
+                          )}
+                        </button>
                       </div>
                     )}
                   </div>
