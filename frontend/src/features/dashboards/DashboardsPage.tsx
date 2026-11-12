@@ -446,57 +446,42 @@ export const DashboardsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Native Cross-Filter Bar */}
-          <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm flex flex-wrap items-center gap-4 text-xs">
-            <div className="flex items-center gap-1.5 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
-              <Filter className="w-3.5 h-3.5 text-blue-600" />
-              Cross-Filters:
-            </div>
+          {/* Dynamic Native Cross-Filter Bar (only shown when dashboard defines filters) */}
+          {activeDashboard.filters && activeDashboard.filters.length > 0 && (
+            <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm flex flex-wrap items-center gap-4 text-xs">
+              <div className="flex items-center gap-1.5 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+                <Filter className="w-3.5 h-3.5 text-blue-600" />
+                Cross-Filters:
+              </div>
 
-            {/* Region Filter */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-600 font-medium">Region:</span>
-              <select
-                value={activeFilters["region"] || "all"}
-                onChange={(e) =>
-                  setActiveFilters({ ...activeFilters, region: e.target.value })
-                }
-                className="px-2 py-1 text-xs border border-slate-300 rounded bg-white font-medium"
-              >
-                <option value="all">All Regions</option>
-                <option value="North America">North America</option>
-                <option value="EMEA">EMEA</option>
-                <option value="APAC">APAC</option>
-                <option value="LATAM">LATAM</option>
-              </select>
-            </div>
+              {activeDashboard.filters.map((f: any) => (
+                <div key={f.id || f.name} className="flex items-center gap-1.5">
+                  <span className="text-slate-600 font-medium capitalize">{f.name}:</span>
+                  <input
+                    type="text"
+                    value={activeFilters[f.name] && activeFilters[f.name] !== "all" ? activeFilters[f.name] : ""}
+                    onChange={(e) =>
+                      setActiveFilters({
+                        ...activeFilters,
+                        [f.name]: e.target.value || "all",
+                      })
+                    }
+                    placeholder={`Filter ${f.name}...`}
+                    className="px-2 py-1 text-xs border border-slate-300 rounded bg-white font-medium w-36"
+                  />
+                </div>
+              ))}
 
-            {/* Category Filter */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-600 font-medium">Category:</span>
-              <select
-                value={activeFilters["category"] || "all"}
-                onChange={(e) =>
-                  setActiveFilters({ ...activeFilters, category: e.target.value })
-                }
-                className="px-2 py-1 text-xs border border-slate-300 rounded bg-white font-medium"
-              >
-                <option value="all">All Categories</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Office Supplies">Office Supplies</option>
-                <option value="Software">Software</option>
-              </select>
+              {Object.keys(activeFilters).some((k) => activeFilters[k] && activeFilters[k] !== "all") && (
+                <button
+                  onClick={() => setActiveFilters({})}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium ml-auto"
+                >
+                  Clear Filters
+                </button>
+              )}
             </div>
-
-            {Object.keys(activeFilters).some((k) => activeFilters[k] !== "all") && (
-              <button
-                onClick={() => setActiveFilters({})}
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium ml-auto"
-              >
-                Clear Filters
-              </button>
-            )}
-          </div>
+          )}
 
           {/* Charts Responsive Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 min-h-[500px]">
