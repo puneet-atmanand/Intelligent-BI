@@ -42,18 +42,6 @@ Its AI assistant enables conversational data exploration while ensuring that eve
 
 ---
 
-## 💡 Docker: Is It Necessary?
-
-> [!NOTE]
-> **Docker is completely optional.** 
-> You do **not** need Docker to run, develop, or demo Ask Your Data. 
-> The project runs natively with embedded SQLite and DuckDB on Windows, macOS, and Linux with zero external services required.
-> Docker compose files (`docker-compose.yml`, `docker-compose.prod.yml`) are provided solely for containerized enterprise cloud deployments (PostgreSQL + Redis + Celery).
-
----
-
----
-
 ## ✨ Key Features
 
 ### 1. Database Connectivity
@@ -247,16 +235,6 @@ Open **`http://localhost:5173`** in your browser and log in with:
 
 ---
 
-## 🐳 Optional: Running with Docker Compose
-
-If deploying to a production server with dedicated PostgreSQL and Redis:
-
-```bash
-docker compose up -d --build
-```
-
----
-
 ## 🧪 Testing & Quality Assurance
 
 ### Backend Tests
@@ -333,8 +311,6 @@ Ask-Your-Data/
 ├── docs/
 ├── scripts/
 │
-├── docker-compose.yml
-├── docker-compose.prod.yml
 ├── .env.example
 └── README.md
 ```
