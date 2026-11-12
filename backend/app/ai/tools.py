@@ -155,7 +155,7 @@ async def tool_get_table_schema(
                     "name": c.name,
                     "type": c.data_type,
                     "is_datetime": c.is_datetime,
-                    "is_numeric": c.is_numeric,
+                    "is_numeric": any(t in (c.data_type or "").upper() for t in ("INT", "DOUBLE", "FLOAT", "DECIMAL", "NUMERIC")),
                     "description": c.description,
                 }
                 for c in dataset.columns
