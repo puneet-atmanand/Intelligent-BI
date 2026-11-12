@@ -95,6 +95,7 @@ class Settings(BaseSettings):
     LLM_MODEL: str = "claude-3-5-sonnet-20241022"
     ANTHROPIC_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
+    GEMINI_API_KEY: str = ""
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     SEND_SAMPLE_ROWS_TO_LLM: bool = False
 

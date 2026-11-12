@@ -2,6 +2,7 @@
 from typing import Optional
 from app.ai.providers.base import BaseLLMProvider
 from app.ai.providers.claude import ClaudeProvider
+from app.ai.providers.gemini import GeminiProvider
 from app.ai.providers.mock import MockProvider
 from app.ai.providers.ollama import OllamaProvider
 from app.ai.providers.openai import OpenAIProvider
@@ -25,6 +26,11 @@ def get_llm_provider(
     elif provider == "openai":
         if settings.OPENAI_API_KEY:
             return OpenAIProvider(model=model or "gpt-4o", api_key=settings.OPENAI_API_KEY)
+        return MockProvider(model="mock-analyst")
+
+    elif provider == "gemini":
+        if settings.GEMINI_API_KEY:
+            return GeminiProvider(model=model or "gemini-2.5-flash", api_key=settings.GEMINI_API_KEY)
         return MockProvider(model="mock-analyst")
 
     elif provider == "ollama":

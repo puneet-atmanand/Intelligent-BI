@@ -21,7 +21,7 @@ async def get_ai_status(
     current_user: User = Depends(require_permission("ai:use")),
 ) -> Any:
     """Return whether the AI Assistant is enabled and configured."""
-    has_key = bool(settings.ANTHROPIC_API_KEY or settings.OPENAI_API_KEY)
+    has_key = bool(settings.ANTHROPIC_API_KEY or settings.OPENAI_API_KEY or settings.GEMINI_API_KEY)
     return AIStatusResponse(
         enabled=settings.AI_ENABLED,
         provider=settings.LLM_PROVIDER,
