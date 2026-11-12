@@ -42,6 +42,9 @@ export const ChartsPage: React.FC = () => {
     ? (datasets as DatasetItem[])
     : (datasets as any)?.data || [];
 
+  // List Filter State
+  const [listDatasetFilter, setListDatasetFilter] = useState<string>("all");
+
   // Explore Builder State
   const [selectedDatasetId, setSelectedDatasetId] = useState<string>("");
   const [selectedVizType, setSelectedVizType] = useState<string>("bar");
@@ -343,9 +346,47 @@ export const ChartsPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Dataset Filter Dropdown (Image 1 Feature on Charts List Page) */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap">
+                DATASET
+              </label>
+              <select
+                value={listDatasetFilter}
+                onChange={(e) => setListDatasetFilter(e.target.value)}
+                className="px-3 py-1.5 text-xs font-medium text-slate-800 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm min-w-[240px]"
+              >
+                <option value="all">All Datasets ({chartList.length} charts)</option>
+                {datasetList.map((ds: DatasetItem) => {
+                  const count = chartList.filter((c) => c.dataset_id === ds.id).length;
+                  return (
+                    <option key={ds.id} value={ds.id}>
+                      {ds.name} ({ds.table_name || "Virtual"}) — {count} charts
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <div className="text-xs text-slate-500">
+              Showing{" "}
+              <span className="font-semibold text-slate-800">
+                {listDatasetFilter === "all"
+                  ? chartList.length
+                  : chartList.filter((c) => c.dataset_id === listDatasetFilter).length}
+              </span>{" "}
+              of {chartList.length} charts
+            </div>
+          </div>
+
           {/* Charts Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {chartList.map((chart: ChartItem) => {
+            {chartList
+              .filter((chart: ChartItem) =>
+                listDatasetFilter === "all" ? true : chart.dataset_id === listDatasetFilter
+              )
+              .map((chart: ChartItem) => {
               const ds = datasetList.find((d: DatasetItem) => d.id === chart.dataset_id);
               return (
                 <div
