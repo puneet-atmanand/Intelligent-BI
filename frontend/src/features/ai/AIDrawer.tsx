@@ -16,6 +16,7 @@ import {
   Terminal,
   AlertTriangle,
   Clock,
+  Plus,
 } from "lucide-react";
 import { api, AIChatResponse, AIStatus } from "@/app/api";
 
@@ -34,17 +35,63 @@ const SAMPLE_QUESTIONS = [
   "What is our total gross revenue?",
 ];
 
+const AI_CONVERSATION_STORAGE_KEY = "askyourdata_ai_conversation_id";
+
 export const AIDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   isOpen,
   onClose,
 }) => {
   const navigate = useNavigate();
+  const [conversationId, setConversationId] = useState<string | undefined>(() => {
+    try {
+      return sessionStorage.getItem(AI_CONVERSATION_STORAGE_KEY) || undefined;
+    } catch {
+      return undefined;
+    }
+  });
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [inputPrompt, setInputPrompt] = useState("");
   const [expandedSql, setExpandedSql] = useState<Record<string, boolean>>({});
   const [expandedData, setExpandedData] = useState<Record<string, boolean>>({});
   const [copiedSql, setCopiedSql] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Restore messages if conversationId was persisted across reload
+  useEffect(() => {
+    if (isOpen && conversationId && messages.length === 0) {
+      api
+        .getAIConversationMessages(conversationId)
+        .then((saved) => {
+          if (Array.isArray(saved) && saved.length > 0) {
+            setMessages(
+              saved.map((m: any) => ({
+                id: m.id,
+                role: m.role,
+                content: m.content,
+                timestamp: m.created_at ? new Date(m.created_at) : new Date(),
+              }))
+            );
+          }
+        })
+        .catch(() => {
+          setConversationId(undefined);
+          try {
+            sessionStorage.removeItem(AI_CONVERSATION_STORAGE_KEY);
+          } catch {}
+        });
+    }
+  }, [isOpen, conversationId]);
+
+  const handleNewChat = () => {
+    setConversationId(undefined);
+    try {
+      sessionStorage.removeItem(AI_CONVERSATION_STORAGE_KEY);
+    } catch {}
+    setMessages([]);
+    setExpandedSql({});
+    setExpandedData({});
+    setInputPrompt("");
+  };
 
   // Fetch AI configuration status
   const { data: statusData } = useQuery<AIStatus>({
@@ -65,8 +112,14 @@ export const AIDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 
   // Chat mutation
   const chatMutation = useMutation({
-    mutationFn: (prompt: string) => api.askAI({ prompt }),
+    mutationFn: (prompt: string) => api.askAI({ prompt, conversation_id: conversationId }),
     onSuccess: (response) => {
+      if (response.conversation_id) {
+        setConversationId(response.conversation_id);
+        try {
+          sessionStorage.setItem(AI_CONVERSATION_STORAGE_KEY, response.conversation_id);
+        } catch {}
+      }
       setMessages((prev) => [
         ...prev,
         {
@@ -152,12 +205,23 @@ export const AIDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
               </div>
             </div>
 
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleNewChat}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition"
+                title="Start a new chat"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                New
+              </button>
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* AI Disabled Alert Banner if AI_ENABLED=false */}

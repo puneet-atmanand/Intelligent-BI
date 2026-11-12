@@ -107,9 +107,17 @@ class AIOrchestrator:
 
         # 1. Fetch or create conversation
         if conversation_id:
+            try:
+                conv_uuid = conversation_id if isinstance(conversation_id, uuid.UUID) else uuid.UUID(str(conversation_id))
+            except ValueError:
+                conv_uuid = None
+        else:
+            conv_uuid = None
+
+        if conv_uuid:
             conv_res = await session.execute(
                 select(AIConversation).where(
-                    AIConversation.id == conversation_id,
+                    AIConversation.id == conv_uuid,
                     AIConversation.user_id == user.id,
                     AIConversation.deleted_at.is_(None),
                 )
@@ -125,6 +133,17 @@ class AIOrchestrator:
             )
             session.add(conversation)
             await session.flush()
+
+        # Load prior conversation history before appending the new user turn
+        history_messages: List[LLMMessage] = []
+        hist_res = await session.execute(
+            select(AIMessage)
+            .where(AIMessage.conversation_id == conversation.id, AIMessage.deleted_at.is_(None))
+            .order_by(AIMessage.created_at.asc())
+        )
+        for hm in hist_res.scalars().all()[-20:]:
+            if hm.role in ("user", "assistant") and hm.content:
+                history_messages.append(LLMMessage(role=hm.role, content=hm.content))
 
         # 2. Record User Message
         user_message_record = AIMessage(
@@ -145,11 +164,12 @@ class AIOrchestrator:
             if ds:
                 context_hint = f"\nUser is currently exploring dataset '{ds.name}' (table: '{ds.table_name}')."
 
-        # 4. Initialize message context for LLM
-        messages: List[LLMMessage] = [
-            LLMMessage(role="system", content=SYSTEM_PROMPT + context_hint),
-            LLMMessage(role="user", content=prompt),
-        ]
+        # 4. Initialize message context for LLM (system + prior turns + current prompt)
+        messages: List[LLMMessage] = (
+            [LLMMessage(role="system", content=SYSTEM_PROMPT + context_hint)]
+            + history_messages
+            + [LLMMessage(role="user", content=prompt)]
+        )
 
         # Execution tracking
         steps: List[Dict[str, Any]] = []
