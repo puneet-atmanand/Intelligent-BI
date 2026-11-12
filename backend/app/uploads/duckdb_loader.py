@@ -12,6 +12,7 @@ from app.connectors.duckdb_connector import duckdb_write_lock
 from app.core.config import settings
 from app.core.errors import ConflictError, AppException
 from app.db.models import DatabaseConnection, Dataset, DatasetColumn, UploadedFile, User
+from app.uploads.dashboard_generator import generate_dashboard_for_dataset
 from app.uploads.parser import sanitize_column_name
 
 
@@ -162,6 +163,7 @@ async def load_file_into_duckdb_and_register_dataset(
             await session.flush()
 
     # Add DatasetColumn records
+    created_cols: List[DatasetColumn] = []
     for col_row in cols_info:
         col_name = str(col_row[1])
         col_type = str(col_row[2]).upper()
@@ -178,6 +180,16 @@ async def load_file_into_duckdb_and_register_dataset(
             is_hidden_from_ai=False,
         )
         session.add(dataset_col)
+        created_cols.append(dataset_col)
+
+    await session.flush()
+    await generate_dashboard_for_dataset(
+        session=session,
+        dataset=dataset,
+        columns=created_cols,
+        user=user,
+        filename=filename,
+    )
 
     await session.commit()
     refreshed_stmt = (
