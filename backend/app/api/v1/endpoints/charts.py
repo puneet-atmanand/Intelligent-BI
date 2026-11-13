@@ -9,13 +9,8 @@ from sqlalchemy.orm import selectinload
 
 from app.api.v1.deps import get_db_session, require_permission
 from app.connectors.factory import get_connector
-<<<<<<< HEAD
 from app.core.errors import NotFoundError, AppException, ValidationError
-from app.db.models import Chart, Dataset, DatabaseConnection, User
-=======
-from app.core.errors import NotFoundError, AppException
 from app.db.models import Chart, Dataset, DatabaseConnection, Dashboard, DashboardChart, User
->>>>>>> upstream/main
 from app.query.cache import QueryResultCache, generate_query_cache_key
 from app.query.chart_query_builder import build_chart_sql
 from app.schemas.chart import (

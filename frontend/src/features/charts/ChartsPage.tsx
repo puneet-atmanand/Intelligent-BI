@@ -16,11 +16,8 @@ import {
 } from "lucide-react";
 import { api, ChartItem, DatasetItem, ChartDataResponse } from "@/app/api";
 import { chartRegistry, ChartPlugin } from "@/charts";
-<<<<<<< HEAD
 import { isTemporalColumn, isNumericColumn } from "./utils";
-=======
 import { AIDrawer } from "@/features/ai/AIDrawer";
->>>>>>> upstream/main
 
 export const ChartsPage: React.FC = () => {
   const queryClient = useQueryClient();
