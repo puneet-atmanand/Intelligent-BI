@@ -158,11 +158,20 @@ class AIOrchestrator:
         context_hint = ""
         if dataset_id:
             ds_res = await session.execute(
-                select(Dataset).where(Dataset.id == dataset_id, Dataset.deleted_at.is_(None))
+                select(Dataset)
+                .options(selectinload(Dataset.columns), selectinload(Dataset.metrics))
+                .where(Dataset.id == dataset_id, Dataset.deleted_at.is_(None))
             )
             ds = ds_res.scalar_one_or_none()
             if ds:
-                context_hint = f"\nUser is currently exploring dataset '{ds.name}' (table: '{ds.table_name}')."
+                col_list = ", ".join([f"{c.name} ({c.data_type})" for c in (ds.columns or [])])
+                context_hint = (
+                    f"\n\n### ACTIVE DATASET CONTEXT (STRICT SCOPE):\n"
+                    f"- The user is specifically exploring dataset: '{ds.name}'\n"
+                    f"- Target Table: '{ds.table_name}'\n"
+                    f"- Columns: {col_list or 'Inspect with get_table_schema'}\n"
+                    f"- IMPORTANT: You MUST focus your analysis, queries, and answers ONLY on table '{ds.table_name}' unless the user explicitly asks about other tables."
+                )
 
         # 4. Initialize message context for LLM (system + prior turns + current prompt)
         messages: List[LLMMessage] = (

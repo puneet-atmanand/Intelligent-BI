@@ -12,10 +12,15 @@ import {
   ChevronLeft,
   Clock,
   AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { api, ChartItem, DatasetItem, ChartDataResponse } from "@/app/api";
 import { chartRegistry, ChartPlugin } from "@/charts";
+<<<<<<< HEAD
 import { isTemporalColumn, isNumericColumn } from "./utils";
+=======
+import { AIDrawer } from "@/features/ai/AIDrawer";
+>>>>>>> upstream/main
 
 export const ChartsPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -36,12 +41,20 @@ export const ChartsPage: React.FC = () => {
     queryFn: api.getDatasets,
   });
 
+  const { data: dashboards = [] } = useQuery({
+    queryKey: ["dashboards"],
+    queryFn: api.getDashboards,
+  });
+
   const chartList: ChartItem[] = Array.isArray(charts)
     ? (charts as ChartItem[])
     : (charts as any)?.data || [];
   const datasetList: DatasetItem[] = Array.isArray(datasets)
     ? (datasets as DatasetItem[])
     : (datasets as any)?.data || [];
+  const dashboardList = Array.isArray(dashboards)
+    ? dashboards
+    : (dashboards as any)?.data || [];
 
   // List Filter State
   const [listDatasetFilter, setListDatasetFilter] = useState<string>("all");
@@ -83,6 +96,8 @@ export const ChartsPage: React.FC = () => {
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [chartTitle, setChartTitle] = useState("");
   const [chartDescription, setChartDescription] = useState("");
+  const [targetDashboardId, setTargetDashboardId] = useState<string>("auto");
+  const [isDatasetAIDrawerOpen, setIsDatasetAIDrawerOpen] = useState(false);
 
   // Resolved Dataset & Columns
   const currentDataset = useMemo(() => {
@@ -340,6 +355,7 @@ export const ChartsPage: React.FC = () => {
         description: chartDescription.trim(),
         dataset_id: selectedDatasetId,
         viz_type: selectedVizType,
+        dashboard_id: targetDashboardId && targetDashboardId !== "auto" && targetDashboardId !== "none" ? targetDashboardId : undefined,
         params: {
           dimension: selectedDimension,
           dimensions: selectedDimensions,
@@ -363,6 +379,7 @@ export const ChartsPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["charts"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboards"] });
       setIsSaveModalOpen(false);
       setEditingChartId(null);
       setMode("list");
@@ -1232,6 +1249,30 @@ export const ChartsPage: React.FC = () => {
                     className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Add to Dashboard
+                  </label>
+                  <select
+                    value={targetDashboardId}
+                    onChange={(e) => setTargetDashboardId(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="auto">
+                      Auto-link to {currentDataset?.name ? `${currentDataset.name} Dashboard` : "Dataset Dashboard"} (Recommended)
+                    </option>
+                    {dashboardList.map((d: any) => (
+                      <option key={d.id} value={d.id}>
+                        {d.title}
+                      </option>
+                    ))}
+                    <option value="none">Do not add to any dashboard</option>
+                  </select>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Your chart will instantly reflect as a tile in the selected dashboard.
+                  </p>
+                </div>
+
                 <div className="flex justify-end gap-2 pt-2">
                   <button
                     onClick={() => setIsSaveModalOpen(false)}
@@ -1250,6 +1291,27 @@ export const ChartsPage: React.FC = () => {
               </div>
             </div>
           )}
+          {/* Floating AI Button at bottom-right dedicated to the open dataset */}
+          <div className="fixed bottom-6 right-6 z-40 flex items-center">
+            <button
+              onClick={() => setIsDatasetAIDrawerOpen(true)}
+              className="group relative flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 ring-4 ring-blue-500/20"
+              title={`Ask AI about ${currentDataset?.name || "this dataset"}`}
+            >
+              <Sparkles className="w-5 h-5 animate-pulse text-amber-300" />
+              <span className="text-xs font-bold tracking-wide">
+                Ask AI: {currentDataset?.name ? currentDataset.name.slice(0, 20) : "Dataset"}
+              </span>
+            </button>
+          </div>
+
+          {/* Dedicated AI Drawer bound specifically to the current open dataset */}
+          <AIDrawer
+            isOpen={isDatasetAIDrawerOpen}
+            onClose={() => setIsDatasetAIDrawerOpen(false)}
+            datasetId={selectedDatasetId || currentDataset?.id}
+            datasetName={currentDataset?.name}
+          />
         </div>
       )}
     </div>
