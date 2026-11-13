@@ -14,7 +14,7 @@ class ChartBase(BaseModel):
 
 
 class ChartCreate(ChartBase):
-    pass
+    dashboard_id: Optional[uuid.UUID] = None
 
 
 class ChartUpdate(BaseModel):

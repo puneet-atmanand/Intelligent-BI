@@ -1,7 +1,7 @@
 """Charts API Endpoints."""
 import uuid
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.api.v1.deps import get_db_session, require_permission
 from app.connectors.factory import get_connector
 from app.core.errors import NotFoundError, AppException
-from app.db.models import Chart, Dataset, DatabaseConnection, User
+from app.db.models import Chart, Dataset, DatabaseConnection, Dashboard, DashboardChart, User
 from app.query.cache import QueryResultCache, generate_query_cache_key
 from app.query.chart_query_builder import build_chart_sql
 from app.schemas.chart import (
@@ -77,6 +77,51 @@ async def create_chart(
         owners=[current_user.email],
     )
     session.add(chart)
+    await session.flush()
+
+    # Automatically add to targeted or matching dataset dashboard
+    target_dashboard: Optional[Dashboard] = None
+    if payload.dashboard_id:
+        target_dashboard = await session.get(Dashboard, payload.dashboard_id)
+    else:
+        # Check if there is an existing dashboard for this dataset
+        import re
+        table_slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", (dataset.table_name or dataset.name).lower()).strip("-")
+        slug = f"{table_slug}-overview"
+        dash_res = await session.execute(
+            select(Dashboard).where(Dashboard.slug == slug, Dashboard.deleted_at.is_(None))
+        )
+        target_dashboard = dash_res.scalar_one_or_none()
+        if not target_dashboard:
+            # Fallback: check dashboard by title
+            dash_res2 = await session.execute(
+                select(Dashboard).where(
+                    Dashboard.title.ilike(f"%{dataset.name}%"),
+                    Dashboard.deleted_at.is_(None),
+                )
+            )
+            target_dashboard = dash_res2.scalars().first()
+
+    if target_dashboard:
+        # Calculate new tile position at the end of the dashboard grid
+        existing_charts_res = await session.execute(
+            select(DashboardChart).where(DashboardChart.dashboard_id == target_dashboard.id)
+        )
+        existing_dc = existing_charts_res.scalars().all()
+        max_y = 0
+        for dc in existing_dc:
+            pos = dc.position or {}
+            bottom = pos.get("y", 0) + pos.get("h", 4)
+            if bottom > max_y:
+                max_y = bottom
+
+        new_dc = DashboardChart(
+            dashboard_id=target_dashboard.id,
+            chart_id=chart.id,
+            position={"x": 0, "y": max_y, "w": 6, "h": 4},
+        )
+        session.add(new_dc)
+
     await session.commit()
     await session.refresh(chart)
 

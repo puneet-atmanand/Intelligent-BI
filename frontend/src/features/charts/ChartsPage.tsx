@@ -37,12 +37,20 @@ export const ChartsPage: React.FC = () => {
     queryFn: api.getDatasets,
   });
 
+  const { data: dashboards = [] } = useQuery({
+    queryKey: ["dashboards"],
+    queryFn: api.getDashboards,
+  });
+
   const chartList: ChartItem[] = Array.isArray(charts)
     ? (charts as ChartItem[])
     : (charts as any)?.data || [];
   const datasetList: DatasetItem[] = Array.isArray(datasets)
     ? (datasets as DatasetItem[])
     : (datasets as any)?.data || [];
+  const dashboardList = Array.isArray(dashboards)
+    ? dashboards
+    : (dashboards as any)?.data || [];
 
   // List Filter State
   const [listDatasetFilter, setListDatasetFilter] = useState<string>("all");
@@ -72,6 +80,7 @@ export const ChartsPage: React.FC = () => {
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [chartTitle, setChartTitle] = useState("");
   const [chartDescription, setChartDescription] = useState("");
+  const [targetDashboardId, setTargetDashboardId] = useState<string>("auto");
   const [isDatasetAIDrawerOpen, setIsDatasetAIDrawerOpen] = useState(false);
 
   // Handle URL param ?dataset=...
@@ -229,6 +238,7 @@ export const ChartsPage: React.FC = () => {
         description: chartDescription.trim(),
         dataset_id: selectedDatasetId,
         viz_type: selectedVizType,
+        dashboard_id: targetDashboardId && targetDashboardId !== "auto" && targetDashboardId !== "none" ? targetDashboardId : undefined,
         params: {
           dimension: selectedDimension,
           dimensions: selectedDimensions,
@@ -249,6 +259,7 @@ export const ChartsPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["charts"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboards"] });
       setIsSaveModalOpen(false);
       setEditingChartId(null);
       setMode("list");
@@ -1083,6 +1094,30 @@ export const ChartsPage: React.FC = () => {
                     className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Add to Dashboard
+                  </label>
+                  <select
+                    value={targetDashboardId}
+                    onChange={(e) => setTargetDashboardId(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="auto">
+                      Auto-link to {currentDataset?.name ? `${currentDataset.name} Dashboard` : "Dataset Dashboard"} (Recommended)
+                    </option>
+                    {dashboardList.map((d: any) => (
+                      <option key={d.id} value={d.id}>
+                        {d.title}
+                      </option>
+                    ))}
+                    <option value="none">Do not add to any dashboard</option>
+                  </select>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Your chart will instantly reflect as a tile in the selected dashboard.
+                  </p>
+                </div>
+
                 <div className="flex justify-end gap-2 pt-2">
                   <button
                     onClick={() => setIsSaveModalOpen(false)}
