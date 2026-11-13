@@ -8,6 +8,7 @@ class ToolCall(BaseModel):
     id: str
     name: str
     arguments: Dict[str, Any]
+    extra_content: Optional[Dict[str, Any]] = None
 
 
 class LLMMessage(BaseModel):

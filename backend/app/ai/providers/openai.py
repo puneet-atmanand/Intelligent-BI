@@ -41,8 +41,9 @@ class OpenAIProvider(BaseLLMProvider):
             if m.name:
                 msg_dict["name"] = m.name
             if m.tool_calls:
-                msg_dict["tool_calls"] = [
-                    {
+                tc_list = []
+                for tc in m.tool_calls:
+                    tc_item: Dict[str, Any] = {
                         "id": tc.id,
                         "type": "function",
                         "function": {
@@ -50,8 +51,10 @@ class OpenAIProvider(BaseLLMProvider):
                             "arguments": json.dumps(tc.arguments),
                         },
                     }
-                    for tc in m.tool_calls
-                ]
+                    if tc.extra_content:
+                        tc_item["extra_content"] = tc.extra_content
+                    tc_list.append(tc_item)
+                msg_dict["tool_calls"] = tc_list
             openai_messages.append(msg_dict)
 
         payload: Dict[str, Any] = {
@@ -83,6 +86,7 @@ class OpenAIProvider(BaseLLMProvider):
                     id=tc.get("id", ""),
                     name=fn.get("name", ""),
                     arguments=args,
+                    extra_content=tc.get("extra_content"),
                 )
             )
 

@@ -89,14 +89,11 @@ class Settings(BaseSettings):
     STATEMENT_TIMEOUT_SECONDS: int = 30
     DEFAULT_ROW_LIMIT: int = 10000
 
-    # AI Configuration (Disabled by default)
-    AI_ENABLED: bool = False
-    LLM_PROVIDER: str = "anthropic"
-    LLM_MODEL: str = "claude-3-5-sonnet-20241022"
-    ANTHROPIC_API_KEY: str = ""
-    OPENAI_API_KEY: str = ""
-    GEMINI_API_KEY: str = ""
-    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    # AI Configuration
+    AI_ENABLED: bool = True
+    LLM_PROVIDER: str = "groq"
+    LLM_MODEL: str = "openai/gpt-oss-120b"
+    GROQ_API_KEY: str = ""
     SEND_SAMPLE_ROWS_TO_LLM: bool = False
 
 
