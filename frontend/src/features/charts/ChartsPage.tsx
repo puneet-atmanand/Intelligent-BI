@@ -12,9 +12,11 @@ import {
   ChevronLeft,
   Clock,
   AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { api, ChartItem, DatasetItem, ChartDataResponse } from "@/app/api";
 import { chartRegistry, ChartPlugin } from "@/charts";
+import { AIDrawer } from "@/features/ai/AIDrawer";
 
 export const ChartsPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -70,6 +72,7 @@ export const ChartsPage: React.FC = () => {
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [chartTitle, setChartTitle] = useState("");
   const [chartDescription, setChartDescription] = useState("");
+  const [isDatasetAIDrawerOpen, setIsDatasetAIDrawerOpen] = useState(false);
 
   // Handle URL param ?dataset=...
   useEffect(() => {
@@ -1098,6 +1101,27 @@ export const ChartsPage: React.FC = () => {
               </div>
             </div>
           )}
+          {/* Floating AI Button at bottom-right dedicated to the open dataset */}
+          <div className="fixed bottom-6 right-6 z-40 flex items-center">
+            <button
+              onClick={() => setIsDatasetAIDrawerOpen(true)}
+              className="group relative flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 ring-4 ring-blue-500/20"
+              title={`Ask AI about ${currentDataset?.name || "this dataset"}`}
+            >
+              <Sparkles className="w-5 h-5 animate-pulse text-amber-300" />
+              <span className="text-xs font-bold tracking-wide">
+                Ask AI: {currentDataset?.name ? currentDataset.name.slice(0, 20) : "Dataset"}
+              </span>
+            </button>
+          </div>
+
+          {/* Dedicated AI Drawer bound specifically to the current open dataset */}
+          <AIDrawer
+            isOpen={isDatasetAIDrawerOpen}
+            onClose={() => setIsDatasetAIDrawerOpen(false)}
+            datasetId={selectedDatasetId || currentDataset?.id}
+            datasetName={currentDataset?.name}
+          />
         </div>
       )}
     </div>

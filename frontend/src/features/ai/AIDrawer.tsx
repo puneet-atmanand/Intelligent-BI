@@ -37,9 +37,16 @@ const SAMPLE_QUESTIONS = [
 
 const AI_CONVERSATION_STORAGE_KEY = "askyourdata_ai_conversation_id";
 
-export const AIDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
+export const AIDrawer: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  datasetId?: string;
+  datasetName?: string;
+}> = ({
   isOpen,
   onClose,
+  datasetId,
+  datasetName,
 }) => {
   const navigate = useNavigate();
   const [conversationId, setConversationId] = useState<string | undefined>(() => {
@@ -112,7 +119,8 @@ export const AIDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 
   // Chat mutation
   const chatMutation = useMutation({
-    mutationFn: (prompt: string) => api.askAI({ prompt, conversation_id: conversationId }),
+    mutationFn: (prompt: string) =>
+      api.askAI({ prompt, conversation_id: conversationId, dataset_id: datasetId }),
     onSuccess: (response) => {
       if (response.conversation_id) {
         setConversationId(response.conversation_id);
@@ -197,11 +205,17 @@ export const AIDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                     Zero Hallucination
                   </span>
                 </div>
-                <p className="text-xs text-slate-500">
-                  {statusData?.provider
-                    ? `Provider: ${statusData.provider} (${statusData.model || "standard"})`
-                    : "Answers questions strictly by executing safe SQL queries"}
-                </p>
+                {datasetName ? (
+                  <p className="text-xs text-blue-700 font-medium">
+                    Focused Dataset: <span className="underline font-semibold">{datasetName}</span>
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-500">
+                    {statusData?.provider
+                      ? `Provider: ${statusData.provider} (${statusData.model || "standard"})`
+                      : "Answers questions strictly by executing safe SQL queries"}
+                  </p>
+                )}
               </div>
             </div>
 
