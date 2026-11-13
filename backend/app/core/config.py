@@ -94,6 +94,9 @@ class Settings(BaseSettings):
     LLM_PROVIDER: str = "groq"
     LLM_MODEL: str = "openai/gpt-oss-120b"
     GROQ_API_KEY: str = ""
+    GEMINI_API_KEY: str = ""
+    OPENAI_API_KEY: str = ""
+    ANTHROPIC_API_KEY: str = ""
     SEND_SAMPLE_ROWS_TO_LLM: bool = False
 
 
